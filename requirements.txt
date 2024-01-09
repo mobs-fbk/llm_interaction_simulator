@@ -1,0 +1,3 @@
+pyautogen
+langchain
+langchain_openai
