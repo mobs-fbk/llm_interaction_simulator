@@ -1,6 +1,10 @@
 [
     {
         "model": "gpt-3.5-turbo-1106",
-        "api_key": "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"
+        "api_key": "<api key>"
+    },
+    {
+        "model": "gpt-4-1106-preview",
+        "api_key": "<api key>"
     }
 ]
