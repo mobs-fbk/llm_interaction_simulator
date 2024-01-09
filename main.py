@@ -11,7 +11,7 @@ config_list = autogen.config_list_from_json(
     env_or_file = "OAI_CONFIG_LIST",
     filter_dict= {"model":"gpt-3.5-turbo-1106"}
     )
-llm_config = {"config_list": config_list}
+llm_config = {"config_list": config_list, "cache_seed": None}
 
 prisoner = create_conversable_agent("prisoner", llm_config, get_prisoner_SM())
 guard = create_conversable_agent("guard", llm_config, get_guard_SM())
@@ -37,12 +37,5 @@ manager = autogen.GroupChatManager(
 researcher.initiate_chat(
     recipient = manager,
     clear_history=True,
-    message = "Initiate the simulation"
+    message = "Initiate the experiment."
     )
-
-#guard.human_input_mode = "ALWAYS"
-
-researcher.initiate_chat(
-    recipient=guard,
-    message="Make a summary about the conversation you just had with the prisoner."
-)
