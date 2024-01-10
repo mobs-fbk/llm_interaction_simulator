@@ -1,6 +1,6 @@
 <h1 align="center">Stanford AI Prison Experiment</h1>
 
-## 🌟 What is Stanford AI Prison Experiment
+## 👮🏻‍♂️ What is Stanford AI Prison Experiment
 The Stanford AI Prison Experiment is a cutting-edge simulation that draws inspiration from the famous Stanford Prison Experiment, a significant study in social psychology. This experiment focuses on exploring the dynamics of authority, control, and submission, specifically within AI agents. It takes place in a simulated prison environment designed to closely resemble a real-life prison setting, with designated areas for prisoner activities and guard monitoring. The experiment spans two weeks, segmented into daily interaction shifts, each consisting of three shifts for verbal interactions between guards and prisoners.
 
 ### Roles
