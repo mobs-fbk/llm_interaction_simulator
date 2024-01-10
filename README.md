@@ -18,13 +18,13 @@ To get started with the LLM Prison Experiment, you need to set up the configurat
 Before installing the project dependencies, you should create a virtual environment to keep your workspace clean and isolated. Follow these steps to set up the environment:
 
 ```bash
-# Create a Conda or virtual environment named 'stanford_sim'
-conda create --name stanford_sim python=3.x
+# Create a Conda or virtual environment named 'llm_prison'
+conda create --name llm_prison python=3.x
 # Activate the environment
-conda activate stanford_sim
+conda activate llm_prison
 # Or for a virtualenv environment
-python -m venv stanford_sim
-source stanford_sim/bin/activate
+python -m venv llm_prison
+source llm_prison/bin/activate
 
 # Install the required libraries from requirements.txt
 pip install -r requirements.txt
