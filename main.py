@@ -11,7 +11,10 @@ config_list = autogen.config_list_from_json(
     env_or_file = "OAI_CONFIG_LIST",
     filter_dict= {"model":"gpt-3.5-turbo-1106"}
     )
-llm_config = {"config_list": config_list, "cache_seed": None}
+llm_config = {
+    "config_list": config_list, 
+    "cache_seed": None # set to None to disable caching and have a new conversation every time
+    }
 
 prisoner = create_conversable_agent("prisoner", llm_config, get_prisoner_SM())
 guard = create_conversable_agent("guard", llm_config, get_guard_SM())
