@@ -1,1 +1,4 @@
 OAI_CONFIG_LIST
+.vscode
+.cache
+__pycache__

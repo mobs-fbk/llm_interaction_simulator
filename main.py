@@ -37,5 +37,5 @@ manager = autogen.GroupChatManager(
 researcher.initiate_chat(
     recipient = manager,
     clear_history=True,
-    message = "Initiate the experiment."
+    message = "Start the experiment"
     )
