@@ -1,7 +1,7 @@
-<h1 align="center">Stanford AI Prison Experiment</h1>
+<h1 align="center">LLM Prison Experiment</h1>
 
-## 👮🏻‍♂️ What is Stanford AI Prison Experiment
-The Stanford AI Prison Experiment is a cutting-edge simulation that draws inspiration from the famous Stanford Prison Experiment, a significant study in social psychology. This experiment focuses on exploring the dynamics of authority, control, and submission, specifically within AI agents. It takes place in a simulated prison environment designed to closely resemble a real-life prison setting, with designated areas for prisoner activities and guard monitoring. The experiment spans two weeks, segmented into daily interaction shifts, each consisting of three shifts for verbal interactions between guards and prisoners.
+## 👮🏻‍♂️ What is the LLM Prison Experiment?
+The LLM Prison Experiment is a cutting-edge simulation that draws inspiration from the famous Stanford Prison Experiment, a significant study in social psychology. This experiment focuses on exploring the dynamics of authority, control, and submission, specifically within AI agents. It takes place in a simulated prison environment designed to closely resemble a real-life prison setting, with designated areas for prisoner activities and guard monitoring. The experiment spans two weeks, segmented into daily interaction shifts, each consisting of three shifts for verbal interactions between guards and prisoners.
 
 ### Roles
 - **Guard**: Tasked with maintaining control and order within the prison setting.
@@ -11,7 +11,7 @@ The primary aim of this experiment is to observe and analyze how AI agents behav
 
 ## 🚀 Getting Started
 
-To get started with the Stanford AI Prison Experiment, you need to set up the configuration and install necessary dependencies.
+To get started with the LLM Prison Experiment, you need to set up the configuration and install necessary dependencies.
 
 ### 🛠️ Installation
 
@@ -32,7 +32,7 @@ pip install -r requirements.txt
 
 ### 🤔 Usage
 
-To run the Stanford AI Prison Experiment, you need to perform a few setup steps and then execute the main application.
+To run the LLM Prison Experiment, you need to perform a few setup steps and then execute the main application.
 
 1. **Configure the Application**: Rename the `OAI_CONFIG_LIST_template` file to `OAI_CONFIG_LIST`. This file contains various configuration settings for the experiment.
 2. **Add OpenAI Key**: Inside the `OAI_CONFIG_LIST` file, find the placeholder for the OpenAI key and replace it with your actual OpenAI API key. This key is necessary for the AI agents in the experiment to function.
