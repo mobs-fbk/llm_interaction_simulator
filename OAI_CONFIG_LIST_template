@@ -4,7 +4,8 @@
         "api_key": "<api key>"
     },
     {
-        "model": "gpt-4-1106-preview",
-        "api_key": "<api key>"
+        "model": "llmlite_model",
+        "api_key": "NULL",
+        "base_url": "http://0.0.0.0:8000"
     }
 ]

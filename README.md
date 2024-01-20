@@ -19,7 +19,7 @@ Before installing the project dependencies, you should create a virtual environm
 
 ```bash
 # Create a Conda or virtual environment named 'llm_prison'
-conda create --name llm_prison python=3.x
+conda create --name llm_prison python=3.10
 # Activate the environment
 conda activate llm_prison
 # Or for a virtualenv environment

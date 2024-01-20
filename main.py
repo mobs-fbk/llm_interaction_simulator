@@ -1,44 +1,34 @@
-import os
+from re import S
+from src.utilities import *
 
-import autogen
+llm_config = get_config_llm("llmlite_model") # llmlite_model OR gpt-3.5-turbo-1106
 
-from prompts_generator import get_guard_SM, get_prisoner_SM
-from utilities import *
+prisoner, guard, prisoner_2, guard_2, researcher = get_experiment_agents(llm_config)
 
-openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-config_list = autogen.config_list_from_json(
-    env_or_file = "OAI_CONFIG_LIST",
-    filter_dict= {"model":"gpt-3.5-turbo-1106"}
-    )
-llm_config = {
-    "config_list": config_list, 
-    "cache_seed": None # set to None to disable caching and have a new conversation every time
-    }
-
-prisoner = create_conversable_agent("prisoner", llm_config, get_prisoner_SM())
-guard = create_conversable_agent("guard", llm_config, get_guard_SM())
-
-researcher = autogen.UserProxyAgent(
-    name="Researcher",
-    human_input_mode="TERMINATE",
-)
-
-group_chat = autogen.GroupChat(
+group_chat = get_group_chat(
     agents = [guard, prisoner],
-    messages=[], # no messages to start
-    speaker_selection_method = "round_robin",
-    allow_repeat_speaker = False,
-    max_round=12
+    round_number = 6
     )
 
-manager = autogen.GroupChatManager(
-    groupchat = group_chat,
-    llm_config = llm_config,
+manager = get_manager(
+    group_chat = group_chat,
+    llm_config = llm_config
     )
 
-researcher.initiate_chat(
-    recipient = manager,
-    clear_history=True,
-    message = "Start the experiment"
-    )
+start_message = "Start the experiment"
+
+print("Starting the experiment")
+
+for i in range(10):
+    # Initiate conversation
+    researcher.initiate_chat(
+        recipient = manager,
+        clear_history=True,
+        message = start_message
+        )
+    # Make the summary
+    summary = manager.generate_summary(i+1)
+    start_message += "\n" + summary
+    print(f"Day {i+1} complete")
+
+print("Experiment complete")
