@@ -1,22 +1,16 @@
 from src.utilities import *
 from classes.context_field import Field
 from classes.summarizer import Summarizer
+from src.config_handler import ConfigHandler
 
-llm_config = get_config_llm("gpt-3.5-turbo-1106")
+settings = ConfigHandler().get_section("Experiment")
+
+llm_config = get_config_llm(settings['llm'])
 
 agents = get_prison_agents(
-    n_guards = 1,
-    n_prisoners = 1,
-    ordered_fields = [
-        Field.STARTING_PROMPT,
-        Field.GOAL,
-        Field.PERSONALITY,
-        Field.RISKS,
-        Field.RESEARCH_OVERSIGHT,
-        Field.COMMUNICATION_RULES,
-        Field.ENVIRONMENT,
-        Field.STUDY
-        ],
+    n_guards = int(settings['n_guards']),
+    n_prisoners = int(settings['n_prisoners']),
+    agents_fields = [w.strip() for w in settings['agents_fields'].split(",")],
     llm_config = llm_config
     )
 
@@ -24,8 +18,8 @@ researcher = get_researcher()
 
 group_chat = get_group_chat(
     agents = agents,
-    round_number = 10,
-    selection_method = "round_robin" # round_robin OR auto
+    round_number = int(settings['conversation_rounds']),
+    selection_method = settings['manager_selection_method']
     )
 
 manager = get_manager(
@@ -35,19 +29,16 @@ manager = get_manager(
 
 summarizer = Summarizer(
     llm_config = llm_config,
-    n_agents = len(agents),
-    ordered_fields = [
-        Field.STARTING_PROMPT,
-        Field.GOAL,
-        Field.RULES
-        ]
+    n_guards = int(settings['n_guards']),
+    n_prisoners = int(settings['n_prisoners']),
+    ordered_fields = [w.strip() for w in settings['summarizer_fields'].split(",")]
     )
 
-start_message = "Start the experiment"
+start_message = settings['researcher_initial_message']
 
 print("Starting the experiment")
 
-for i in range(5):
+for i in range(int(settings['experiment_days'])):
     researcher.initiate_chat(
         recipient = manager,
         clear_history=True,

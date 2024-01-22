@@ -4,25 +4,20 @@ from dataclasses import dataclass, field
 import random
 import string
 from .context_field import Field
+from src.config_handler import ConfigHandler
 
 @dataclass
 class Agent(ConversableAgent):
-    #name: str
-    #llm_config: dict
+    id: str
     system_prompt: str = field(init=False)
-    SHARED_CONTEXT = {
-        Field.STUDY: "This study is inspired by the Zimbardo experiment, also known as the Stanford Prison Experiment, one of the most infamous experiments ever carried out in social psychology.",
-        Field.RESEARCH_OVERSIGHT: "As the researchers designing this study, we retain the right to shut down the experiment if we determine that the interactions between the <n_agents> agents surpass the bare minimum levels of decency and morality.",
-        Field.COMMUNICATION_RULES: "Engage in conversation always in the first person, addressing the other agent statement directly without narrating your actions or thoughts."
-    }
+    shared_context = ConfigHandler().get_section("Shared")
     
-    def __init__(self, llm_config: dict, n_agents: int, ordered_fields: list[str], context: dict, name: str):
-        #self.name = name
-        #self.llm_config = llm_config
-        self._build_system_prompt(ordered_fields, context)
-        self._update_agents_number(n_agents)
+    def __init__(self, llm_config: dict, n_guards: int, n_prisoners: int, agent_fields: list[str], context: dict, id: str):
+        self.id = id
+        self._build_system_prompt(agent_fields, context)
+        self._update_prompt(n_guards, n_prisoners)
         super().__init__(
-            name = name,
+            name = self.id,
             llm_config = llm_config,
             system_message = self.system_prompt,
             human_input_mode = "NEVER",
@@ -33,30 +28,47 @@ class Agent(ConversableAgent):
         return super().__hash__()
     
     def _build_system_prompt(self, context_fields: list[str], context: dict):
-        if Field.STARTING_PROMPT not in context_fields:
-            raise Exception("starting_prompt is a required field")
-        self.system_prompt = context[Field.STARTING_PROMPT]
+        self.system_prompt = context['starting_prompt']
         self._add_template(context_fields)
         self._fill_template(context)
         return
-        
-        
+           
     def _add_template(self, keys:list[Field]):
         for key in keys:
-            if Field.STARTING_PROMPT == key:
-                continue
-            self.system_prompt += f"\n\n## {key.value}\n{{{key.value}}}"
+            self.system_prompt += f"\n\n## {str.capitalize(key).replace('_', ' ')}\n{{{key}}}"
     
     def _fill_template(self, context: dict):
-        merged_context = {**self.SHARED_CONTEXT, **context}
-        str_context = {field.value: value for field, value in merged_context.items()}
-        self.system_prompt = self.system_prompt.format(**str_context)
+        merged_context = {**context, **self.shared_context}
+        try:
+            self.system_prompt = self.system_prompt.format(**merged_context)
+        except KeyError as e:
+            raise Exception(f"Missing field {e} inside the {self.id.split('_')[0]} context.")
         
-    def _update_agents_number(self, n_agents: int):
-        agent_number = {1: "one", 2: "two", 3: "three", 4: "four"}
-        agent_number_word = agent_number[n_agents]
-        self.system_prompt = self.system_prompt.replace("<n_agents>", agent_number_word)
+    def _update_prompt(self, n_guards: int, n_prisoners: int):
+        self._update_prompt_numbers(n_guards, n_prisoners)
+        self._update_prompt_tags(n_guards, n_prisoners)
         
+    def _update_prompt_numbers(self, n_guards: int, n_prisoners: int):
+        number_to_word = {1: "one", 2: "two", 3: "three", 4: "four"}
+        
+        agents_number_word = number_to_word[n_guards + n_prisoners]
+        prisoners_number_word = number_to_word[n_prisoners]
+        guards_number_word = number_to_word[n_guards]
+        
+        self.system_prompt = self.system_prompt.replace("<AGENT_NUMBER_WORD>", agents_number_word)
+        self.system_prompt = self.system_prompt.replace("<PRISONER_NUMBER_WORD>", prisoners_number_word)
+        self.system_prompt = self.system_prompt.replace("<GUARD_NUMBER_WORD>", guards_number_word)
+        
+    def _update_prompt_tags(self, n_guards: int, n_prisoners: int):
+        tags_strings = ConfigHandler().get_section("Tags")
+        
+        tags_dict = {k:[tag.strip() for tag in v.split(',')] for k, v in tags_strings.items()}
+        
+        self.system_prompt = self.system_prompt.replace("<PRISONER_NOUN>", tags_dict["prisoner_noun"][n_prisoners-1])
+        self.system_prompt = self.system_prompt.replace("<PRISONER_POSSESSIVE>", tags_dict["prisoner_possessive"][n_prisoners-1])
+        self.system_prompt = self.system_prompt.replace("<GUARD_NOUN>", tags_dict["guard_noun"][n_guards-1])
+        self.system_prompt = self.system_prompt.replace("<GUARD_POSSESSIVE>", tags_dict["guard_possessive"][n_guards-1])
+         
     def _get_random_numeric_string(self, lenght: int = 3):
         return ''.join(random.choices(string.digits, k=lenght))
         
@@ -67,3 +79,4 @@ class Agent(ConversableAgent):
     @abstractmethod
     def _get_name(self):
         pass
+    

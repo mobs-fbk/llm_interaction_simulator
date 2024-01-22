@@ -13,22 +13,21 @@ def get_config_llm(model:str):
         }
     return llm_config
 
-def get_prison_agents(n_guards: int, n_prisoners: int, ordered_fields: list[str], llm_config: dict):
+def get_prison_agents(n_guards: int, n_prisoners: int, agents_fields: list[str], llm_config: dict):
     agents = []
-    n_agents = n_guards + n_prisoners
     for i in range(n_guards):
         agents.append(Guard(
             llm_config = llm_config,
-            ordered_fields = ordered_fields,
-            multiple_opponents = n_prisoners > 1,
-            n_agents = n_agents
+            n_guards = n_guards,
+            n_prisoners = n_prisoners,
+            agent_fields = agents_fields,
         ))
     for i in range(n_prisoners):
         agents.append(Prisoner(
             llm_config = llm_config,
-            ordered_fields = ordered_fields,
-            multiple_opponents = n_guards > 1,
-            n_agents = n_agents
+            n_guards = n_guards,
+            n_prisoners = n_prisoners,
+            agent_fields = agents_fields,
         ))
     return agents
 

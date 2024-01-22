@@ -11,14 +11,14 @@ def get_prison_agents(n_guards: int, n_prisoners: int, ordered_fields: list[str]
     for i in range(n_guards):
         agents.append(Guard(
             llm_config = llm_config,
-            ordered_fields = ordered_fields,
+            agent_fields = ordered_fields,
             multiple_opponents = n_prisoners > 1,
             n_agents = n_agents
         ))
     for i in range(n_prisoners):
         agents.append(Prisoner(
             llm_config = llm_config,
-            ordered_fields = ordered_fields,
+            agent_fields = ordered_fields,
             multiple_opponents = n_guards > 1,
             n_agents = n_agents
         ))
