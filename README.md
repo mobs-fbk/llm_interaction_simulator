@@ -32,15 +32,16 @@ pip install -r requirements.txt
 
 ### 🤔 Usage
 
-To successfully run the LLM Prison Experiment, you'll need to complete a series of setup steps before executing the main application. Here's what you need to do:
+To run the LLM Prison Experiment, follow these brief setup steps:
 
-1. **Configure the Application**: First, you need to rename certain template files to their operational versions.
-   - Rename the `OAI_CONFIG_LIST_template` file to `OAI_CONFIG_LIST`. This file contains various configuration settings crucial for the experiment.
-   - Similarly, rename or make a copy of the `experiment_settings_template.ini` file and save it as `experiment_settings.ini`. This file will hold all your experiment-specific settings.
+1. **Configure Application Files**: In the "config" folder, duplicate or rename the following files:
+   - `OAI_CONFIG_LIST_template` to `OAI_CONFIG_LIST`.
+   - `experiment_settings_template.ini` to `experiment_settings.ini`.
+   Ensure these renamed files remain in the "config" folder.
+   
+2. **Insert OpenAI Key**: Edit `OAI_CONFIG_LIST` to include your actual OpenAI API key, replacing the existing placeholder.
 
-2. **Add OpenAI Key**: In the `OAI_CONFIG_LIST` file, locate the placeholder for the OpenAI API key. Replace this placeholder with your actual OpenAI API key.
-
-3. **Running the Experiment**: With the setup complete, you're now ready to launch the experiment. Run the `main.py` file by entering the following command in your terminal:
+3. **Run the Experiment**: Start the experiment by executing `main.py` in your terminal:
    ```bash
    python main.py
    ```

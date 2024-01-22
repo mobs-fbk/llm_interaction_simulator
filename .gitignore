@@ -160,6 +160,7 @@ cython_debug/
 #.idea/
 
 OAI_CONFIG_LIST
+experiment_settings.ini
 .vscode
 .cache
 __pycache__

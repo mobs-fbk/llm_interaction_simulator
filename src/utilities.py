@@ -4,7 +4,7 @@ from classes.prisoner import Prisoner
 
 def get_config_llm(model:str):
     config_list = autogen.config_list_from_json(
-        env_or_file = "OAI_CONFIG_LIST",
+        env_or_file = "config/OAI_CONFIG_LIST",
         filter_dict = {"model":model}
         )
     llm_config = {
