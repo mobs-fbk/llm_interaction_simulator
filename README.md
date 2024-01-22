@@ -87,13 +87,13 @@ Customizing the LLM Prison Experiment is crucial for tailoring the experience to
 - `n_guards`: Indicates the number of guard agents participating in the experiment.
 - `n_prisoners`: Determines the number of prisoner agents participating in the experiment.
 - `agents_fields`: Lists fields included in the agents' prompt, in the order they appear.
-  - ⚠️ Warning: Ensure that fields listed in `agents_fields` are defined in the [Guard], [Prisoner], or [Shared] sections of the prompts.
+  - ⚠️ **Warning**: Ensure that fields listed in `agents_fields` are defined in the [Guard], [Prisoner], or [Shared] sections of the prompts.
 - `summarizer_fields`: Identifies fields considered by the summarizer when generating summaries.
-  - ⚠️ Warning: Ensure that fields listed in `summarizer_fields` are present in the [Summarizer] section.
+  - ⚠️ **Warning**: Ensure that fields listed in `summarizer_fields` are present in the [Summarizer] section.
 
 ### 🎨 Customization Tips
 - **Adding or Removing Sections**: Users can easily add or remove sections from each agent's prompt. However, these sections must be present in the respective list of fields.
-  - 🗒️ Note: The `starting_prompt`:
+  - 🗒️ **Note**: The `starting_prompt`:
     - is a mandatory field and cannot be omitted from the agents' fields
     - should not be included in the `agents_fields` or the `summarizer_fields`.
 
@@ -170,5 +170,3 @@ When using the LLM Prison Experiment, particularly with the **Mistral** model, t
 
 ### Token Limit Handling
 - **Uncertain Token Limit Management**: There hasn't been a clear method found for handling token limits within the context of this experiment. It's suspected that this might sometimes cause issues with the LiteLLM model, but no concrete trials or solutions have been attempted to address this directly.
-
-It's important to note that these issues are part of the ongoing development and testing process. As the field of AI and language models evolves, solutions to these problems may become more apparent. For now, researchers and users of the LLM Prison Experiment should be prepared to encounter and troubleshoot these challenges as part of their exploration and study.
