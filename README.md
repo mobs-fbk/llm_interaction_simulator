@@ -69,7 +69,7 @@ After installing the necessary dependencies for the LLM Prison Experiment, the n
 
 4. **Start a LiteLLM Server**: To call the local LLM as an OpenAI LLM, you need to start a [LiteLLM](https://docs.litellm.ai/) server (autogen requirement, it can only interacts with API that function similar to the OpenAI ones). For the Mistral model, use:
    ```bash
-   litellm --model ollama\mistral
+   litellm --model ollama/mistral
    ```
    ⚠️ **Warning**: If the program doesn't continue, you may need to close the local model (using CTRL+C) and restart it.
 
