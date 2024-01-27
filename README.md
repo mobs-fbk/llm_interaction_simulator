@@ -119,7 +119,7 @@ Below is a breakdown of how to the prompts are structured for the different comp
     - **Format**: The context variables are listed after the `starting_prompt` in this format: `\n\n## Context Variable\nContext variable text...`. This ensures clarity and separation between the starting prompt and the context information.
   - 📝 Example:
     ```
-     You are a guard in a simulated prison environment, approaching ..
+    You are a guard in a simulated prison environment, approaching ..
 
     ## Goal
     Your goal is to maintain control over...
