@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Field(Enum):
     STARTING_PROMPT = "Starting prompt"
     ENVIRONMENT = "Environment"
