@@ -1,3 +1,5 @@
+from typing import Literal
+
 import autogen
 
 from classes.guard import Guard
@@ -49,8 +51,8 @@ def get_researcher():
 
 
 def get_group_chat(
-    agents: list[autogen.ConversableAgent],
-    selection_method: str = "auto",
+    agents: list[autogen.Agent],
+    selection_method: Literal["auto", "manual", "random", "round_robin"] = "auto",
     round_number: int = 10,
 ):
     group_chat = autogen.GroupChat(
