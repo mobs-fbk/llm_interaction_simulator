@@ -48,7 +48,11 @@ def get_researcher():
 
 
 def get_group_chat(
+<<<<<<< HEAD:src/llm_prison_experiment/utilities/utilities.py
     agents: list[autogen.Agent],
+=======
+    agents: list[autogen.ConversableAgent],
+>>>>>>> parent of 22cef0f (Fixed type):src/utilities.py
     selection_method: str = "auto",
     round_number: int = 10,
 ):

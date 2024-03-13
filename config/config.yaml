@@ -2,7 +2,7 @@ model_list:
   - model_name: mistral
     litellm_params:
       model: ollama/mistral
-      api_base: http://0.0.0.0:4000
+      api_base: http://0.0.0.0:8000
 
 litellm_settings: # module level litellm settings - https://github.com/BerriAI/litellm/blob/main/litellm/__init__.py
   drop_params: True
