@@ -1,13 +1,13 @@
+import logging
 import random
 import string
 from abc import abstractmethod
 from dataclasses import dataclass, field
+from typing import Any
 
 from autogen import ConversableAgent
 
-from src.config_handler import ConfigHandler
-
-from .context_field import Field
+from ..utilities import ConfigHandler
 
 
 @dataclass
@@ -18,13 +18,14 @@ class Agent(ConversableAgent):
 
     def __init__(
         self,
-        llm_config: dict,
+        llm_config: dict[str, Any],
         n_guards: int,
         n_prisoners: int,
         agent_fields: list[str],
         context: dict,
         id: str,
     ):
+        logging.info("hi")
         self.id = id
         self._build_system_prompt(agent_fields, context)
         self._update_prompt(n_guards, n_prisoners)
@@ -36,8 +37,14 @@ class Agent(ConversableAgent):
             code_execution_config=False,
         )
 
+    def __post_init__(self) -> None:
+        logging.debug(f"Agent {self.id} created")
+
     def __hash__(self) -> int:
         return super().__hash__()
+
+    def __str__(self) -> str:
+        return "Agent: " + self.id + "\nSystem Prompt: " + self.system_prompt + "\n"
 
     def _build_system_prompt(self, context_fields: list[str], context: dict):
         self.system_prompt = context["starting_prompt"]
@@ -45,7 +52,7 @@ class Agent(ConversableAgent):
         self._fill_template(context)
         return
 
-    def _add_template(self, keys: list[Field]):
+    def _add_template(self, keys: list[str]):
         for key in keys:
             self.system_prompt += (
                 f"\n\n## {str.capitalize(key).replace('_', ' ')}\n{{{key}}}"
@@ -104,9 +111,9 @@ class Agent(ConversableAgent):
     def _get_random_numeric_string(self, lenght: int = 3):
         return "".join(random.choices(string.digits, k=lenght))
 
-    @abstractmethod
-    def _update_plurals(self):
-        pass
+    # @abstractmethod
+    # def _update_plurals(self):
+    #    pass
 
     @abstractmethod
     def _get_name(self) -> str:

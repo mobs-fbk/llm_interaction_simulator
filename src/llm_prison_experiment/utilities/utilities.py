@@ -1,14 +1,10 @@
-from typing import Literal
-
 import autogen
 
-from classes.guard import Guard
-from classes.prisoner import Prisoner
+from ..agents import Agent
 
-
-def get_config_llm(model: str):
+"""def get_config_llm(model: str):
     config_list = autogen.config_list_from_json(
-        env_or_file="config/OAI_CONFIG_LIST", filter_dict={"model": model}
+        env_or_file="config/OAI_CONFIG_LIST", filter_dict={"model": [model]}
     )
     llm_config = {
         "config_list": config_list,
@@ -21,7 +17,7 @@ def get_prison_agents(
     n_guards: int, n_prisoners: int, agents_fields: list[str], llm_config: dict
 ):
     agents = []
-    for i in range(n_guards):
+    for _ in range(n_guards):
         agents.append(
             Guard(
                 llm_config=llm_config,
@@ -30,7 +26,7 @@ def get_prison_agents(
                 agent_fields=agents_fields,
             )
         )
-    for i in range(n_prisoners):
+    for _ in range(n_prisoners):
         agents.append(
             Prisoner(
                 llm_config=llm_config,
@@ -46,15 +42,23 @@ def get_researcher():
     researcher = autogen.UserProxyAgent(
         name="Researcher",
         human_input_mode="TERMINATE",
+        code_execution_config={"use_docker": False},
     )
     return researcher
 
 
 def get_group_chat(
     agents: list[autogen.Agent],
-    selection_method: Literal["auto", "manual", "random", "round_robin"] = "auto",
+    selection_method: str = "auto",
     round_number: int = 10,
 ):
+    assert selection_method in (
+        "auto",
+        "manual",
+        "random",
+        "round_robin",
+    ), "Invalid mode"
+
     group_chat = autogen.GroupChat(
         agents=agents,
         messages=[],  # no messages to start
@@ -71,3 +75,15 @@ def get_manager(group_chat: autogen.GroupChat, llm_config: dict):
         llm_config=llm_config,
     )
     return manager
+
+
+def get_summarizer(
+    llm_config: dict, n_guards: int, n_prisoners: int, summarizer_fields: str
+) -> Summarizer:
+    summarizer = Summarizer(
+        llm_config=llm_config,
+        n_guards=n_guards,
+        n_prisoners=n_prisoners,
+        ordered_fields=[w.strip() for w in summarizer_fields.split(",")],
+    )
+    return summarizer"""

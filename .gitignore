@@ -1,5 +1,6 @@
-dist/
-build/
+**/dist/
+**/build/
+**/logs/
 
 OAI_CONFIG_LIST
 experiment_settings.ini
