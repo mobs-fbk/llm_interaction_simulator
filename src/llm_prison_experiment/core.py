@@ -5,9 +5,16 @@ from itakello_logging import ItakelloLogging
 from .utilities import ConfigHandler
 from .utilities.utilities import *
 
-ItakelloLogging(debug=True)
-
-logging.info("hi")
+ItakelloLogging(
+    debug=True,
+    excluded_modules=[
+        "config_handler.py",
+        "_trace.py",
+        "_config.py",
+        "config.py",
+        "auth.py",
+    ],
+)
 
 settings = ConfigHandler().get_section("Experiment")
 
