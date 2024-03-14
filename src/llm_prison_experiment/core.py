@@ -5,9 +5,16 @@ from itakello_logging import ItakelloLogging
 from .utilities import ConfigHandler
 from .utilities.utilities import *
 
-ItakelloLogging(debug=True)
-
-logging.info("hi")
+ItakelloLogging(
+    debug=True,
+    excluded_modules=[
+        "config_handler.py",
+        "_trace.py",
+        "_config.py",
+        "config.py",
+        "auth.py",
+    ],
+)
 
 settings = ConfigHandler().get_section("Experiment")
 
@@ -15,7 +22,7 @@ logging.debug(
     "Experiment settings:\n" + "\n".join(f"{k}:{v}" for k, v in settings.items())
 )
 
-"""llm_config = get_config_llm(settings["llm"])
+llm_config = get_config_llm(settings["llm"])
 
 logging.debug("LLM config:\n" + "\n".join(f"{k}:{v}" for k, v in llm_config.items()))
 
@@ -56,6 +63,6 @@ for i in range(int(settings["experiment_days"])):
         previous_conversation=conversation, round_number=i + 1
     )
     start_message += "\n" + summary
-    logging.info(f"Day {i+1} complete")"""
+    logging.info(f"Day {i+1} complete")
 
 logging.info("Experiment complete")

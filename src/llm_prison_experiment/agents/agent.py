@@ -25,7 +25,6 @@ class Agent(ConversableAgent):
         context: dict,
         id: str,
     ):
-        logging.info("hi")
         self.id = id
         self._build_system_prompt(agent_fields, context)
         self._update_prompt(n_guards, n_prisoners)
