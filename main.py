@@ -2,8 +2,8 @@ import logging
 
 from itakello_logging import ItakelloLogging
 
-from .utilities import ConfigHandler
-from .utilities.utilities import *
+from src.utilities import ConfigHandler
+from src.utilities.entities_helper import *
 
 ItakelloLogging(
     debug=True,

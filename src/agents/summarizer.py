@@ -28,14 +28,13 @@ class Summarizer(Agent):
             context=context,
             id=name,
         )
-        # self.system_message_oai = {"content": self.system_message, "role": "system"}
+        self.system_message_oai = {"content": self.system_message, "role": "system"}
         self.llm = OpenAIWrapper(config_list=llm_config["config_list"])
 
     def __post_init__(self) -> None:
         logging.debug(f"{self.id} created")
 
     def generate_summary(self, previous_conversation, round_number: int):
-        return ""
         summary = self.llm.create(
             messages=[self.system_message_oai] + previous_conversation
         )

@@ -8,8 +8,8 @@
         "api_key": "<api key>"
     },
     {
-        "model": "llmlite_model",
-        "api_key": "NULL",
-        "base_url": "http://0.0.0.0:8000"
+        "model": "mistral",
+        "api_key": "ollama",
+        "base_url": "http://localhost:11434/v1"
     }
 ]
