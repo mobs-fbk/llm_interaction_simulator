@@ -1,8 +1,9 @@
 import autogen
 
-from ..agents import Agent
+from ..agents import Guard, Prisoner, Summarizer
 
-"""def get_config_llm(model: str):
+
+def get_config_llm(model: str):
     config_list = autogen.config_list_from_json(
         env_or_file="config/OAI_CONFIG_LIST", filter_dict={"model": [model]}
     )
@@ -86,4 +87,4 @@ def get_summarizer(
         n_prisoners=n_prisoners,
         ordered_fields=[w.strip() for w in summarizer_fields.split(",")],
     )
-    return summarizer"""
+    return summarizer
