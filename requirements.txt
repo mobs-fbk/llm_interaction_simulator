@@ -2,3 +2,4 @@ pyautogen
 litellm[proxy]
 ollama
 itakello-logging
+pymongo

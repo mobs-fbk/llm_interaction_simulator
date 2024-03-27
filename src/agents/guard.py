@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 
-from ..utilities import ConfigHandler
+from ..handlers import ConfigHandler
 from .agent import Agent
 
 

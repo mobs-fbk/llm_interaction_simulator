@@ -4,7 +4,7 @@ from typing import Any
 
 from autogen import OpenAIWrapper
 
-from ..utilities import ConfigHandler
+from ..handlers import ConfigHandler
 from .agent import Agent
 
 

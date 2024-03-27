@@ -7,7 +7,7 @@ from typing import Any
 
 from autogen import ConversableAgent
 
-from ..utilities import ConfigHandler
+from ..handlers import ConfigHandler
 
 
 @dataclass
