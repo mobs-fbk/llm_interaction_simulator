@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from ..handlers import DocumentSerializable
+from ..serializers import DocumentSerializable
 
 
 @dataclass

@@ -1,6 +1,8 @@
 import configparser
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 class ConfigHandler:
     def __init__(self, config_file="config/experiment_settings.ini"):
@@ -8,5 +10,5 @@ class ConfigHandler:
         self.config.read(config_file)
 
     def get_section(self, section):
-        logging.debug(f"Retrieving section: {section}")
+        logger.debug(f"Retrieving section from config file: {section}")
         return dict(self.config[section])

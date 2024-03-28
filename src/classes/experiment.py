@@ -1,10 +1,15 @@
+import json
+import logging
 from dataclasses import dataclass, field
 
 import autogen
 
 from ..agents import Agent, Guard, Prisoner, Summarizer
-from ..handlers import ConfigHandler, DocumentSerializable
+from ..handlers import ConfigHandler
+from ..serializers import DocumentSerializable
 from . import Conversation
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -19,11 +24,14 @@ class Experiment(DocumentSerializable):
     def __post_init__(self):
         self.config = ConfigHandler().get_section("Experiment")
         llm_config = self._get_config_llm(self.config["llm"])
-        self.agents = self._get_prison_agents(llm_config)
         self.researcher = self._get_researcher()
+        self.agents = self._get_prison_agents(llm_config)
         self.group_chat = self._get_group_chat(self.agents)
         self.manager = self._get_manager(self.group_chat, llm_config)
         self.summarizer = self._get_summarizer(llm_config)
+        logger.info(
+            f"Experiment created with config:\n{json.dumps(self.config, indent=2)}"
+        )
 
     def to_document(self) -> dict:
         doc = self.config.copy()
@@ -41,6 +49,7 @@ class Experiment(DocumentSerializable):
             )
             start_message += "\n" + summary
         raise NotImplementedError("Finish this method")
+        logger.info("Experiment complete")
         return Conversation(messages=self.group_chat.messages)
 
     def _get_config_llm(self, model: str) -> dict:
@@ -58,7 +67,6 @@ class Experiment(DocumentSerializable):
             llm_config=llm_config,
             n_guards=int(self.config["n_guards"]),
             n_prisoners=int(self.config["n_prisoners"]),
-            ordered_fields=[w.strip() for w in self.config["agents_fields"].split(",")],
         )
         return summarizer
 

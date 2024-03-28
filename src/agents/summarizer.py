@@ -16,7 +16,6 @@ class Summarizer(Agent):
         llm_config: dict[str, Any],
         n_guards: int,
         n_prisoners: int,
-        ordered_fields: list[str] = [],
     ):
         name = self._get_name()
         context = ConfigHandler().get_section("Summarizer")
@@ -24,7 +23,7 @@ class Summarizer(Agent):
             llm_config=llm_config,
             n_guards=n_guards,
             n_prisoners=n_prisoners,
-            agent_fields=ordered_fields,
+            agent_fields=list(context.keys())[1:],
             context=context,
             id=name,
         )
