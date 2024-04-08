@@ -1,1 +1,1 @@
-from .document_serializable import DocumentSerializable
+from .document_serializer import DocumentSerializer

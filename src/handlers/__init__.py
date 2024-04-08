@@ -1,2 +1,3 @@
+from .cli_handler import CLIHandler
 from .config_handler import ConfigHandler
-from .database_handler import DatabaseHandler
+from .db_handler import DBHandler

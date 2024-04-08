@@ -1,8 +1,10 @@
 import logging
 from dataclasses import dataclass
 
-from ..handlers import ConfigHandler
+from ..handlers.config_handler import ConfigHandler
 from .agent import Agent
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -14,7 +16,7 @@ class Guard(Agent):
         n_guards: int,
         n_prisoners: int,
         agent_fields: list[str] = [],
-    ):
+    ) -> None:
         name = self._get_name()
         context = ConfigHandler().get_section("Guard")
         super().__init__(
@@ -25,9 +27,7 @@ class Guard(Agent):
             context=context,
             id=name,
         )
-
-    def __post_init__(self) -> None:
-        logging.debug(f"Guard {self.id} created")
+        logger.debug(f"Guard {name} created")
 
     def __hash__(self) -> int:
         return super().__hash__()
@@ -35,4 +35,5 @@ class Guard(Agent):
     def _get_name(self) -> str:
         prefix = "Guard_G-"
         random_string = self._get_random_numeric_string()
-        return prefix + random_string
+        name = prefix + random_string
+        return name

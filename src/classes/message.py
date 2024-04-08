@@ -1,10 +1,21 @@
 from dataclasses import dataclass, field
 
-from ..serializers import DocumentSerializable
+from ..serializers import DocumentSerializer
 
 
 @dataclass
-class Message(DocumentSerializable):
+class Message(DocumentSerializer):
+    index: int
+    day: int
+    role: str
+    speaker: str
+    content: str
 
     def to_document(self) -> dict:
-        return {}
+        return {
+            "index": self.index,
+            "day": self.day,
+            "role": self.role,
+            "speaker": self.speaker,
+            "content": self.content,
+        }

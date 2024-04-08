@@ -1,5 +1,6 @@
 pyautogen
-litellm[proxy]
 ollama
 itakello-logging
 pymongo
+inquirer
+prompt_toolkit

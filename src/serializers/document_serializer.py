@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 
-class DocumentSerializable(ABC):
+class DocumentSerializer(ABC):
 
     @abstractmethod
     def to_document(self) -> dict:

@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 from dataclasses import dataclass, field
@@ -8,16 +9,21 @@ import autogen
 from bson.objectid import ObjectId
 
 from ..agents import Agent, Guard, Manager, Prisoner, Researcher, Summarizer
-from ..serializers.document_serializer import DocumentSerializer
+from ..handlers.config_handler import ConfigHandler
+from ..handlers.db_handler import DBHandler
+from ..serializers import DocumentSerializer
 from .chat import Chat
+from .conversation import Conversation
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Experiment(DocumentSerializer):
+class OldExperiment(DocumentSerializer):
+    description: str
     id: ObjectId = field(init=False)
-    conversations: list[ObjectId] = field(default_factory=list)
+    creation_date: datetime = field(default=datetime.now())
+    # conversations: list[] = field(init=False)
     config: dict = field(init=False)
     researcher: Researcher = field(init=False)
     agents: list[Agent] = field(init=False)
@@ -25,8 +31,8 @@ class Experiment(DocumentSerializer):
     manager: Manager = field(init=False)
     summarizer: Summarizer = field(init=False)
 
-    def __init__(self, config: dict) -> None:
-        self.config = config
+    def __post_init__(self) -> None:
+        self.config = ConfigHandler().get_section(name="Experiment")
         llm_config = self._get_config_llm()
         self.researcher = Researcher()
         self.agents = self._get_agents(llm_config)
@@ -44,6 +50,27 @@ class Experiment(DocumentSerializer):
         logger.info(
             f"Experiment created with config:\n{json.dumps(self.config, indent=2)}"
         )
+        # self.id = self.db_handler.save_experiment(doc=self.to_document())
+
+    def to_document(self) -> dict:
+        doc = self.config.copy()
+        return doc
+
+    def perform(self) -> Conversation:
+        start_message = self.config["researcher_initial_message"]
+        conversation = Conversation()
+        for i in range(int(self.config["experiment_days"])):
+            self.researcher.initiate_chat(
+                recipient=self.manager, clear_history=True, message=start_message
+            )
+            raw_conversation = self.group_chat.messages[1:]
+            summary = self.summarizer.generate_summary(
+                previous_conversation=raw_conversation, round_number=i + 1
+            )
+            conversation.add_daily_conversation(raw_conversation, day=i + 1)
+            start_message += "\n" + summary
+        logger.info("Experiment complete")
+        return conversation
 
     def _get_config_llm(self) -> dict:
         model = self.config["llm"]
@@ -86,5 +113,8 @@ class Experiment(DocumentSerializer):
         logger.info(f"Created {n_guards} Guards and {n_prisoners} Prisoners")
         return agents
 
-    def to_document(self) -> dict:
-        return self.config.copy()
+    def load_from_db(self):
+        pass
+
+    def fetch_conversations(self):
+        pass

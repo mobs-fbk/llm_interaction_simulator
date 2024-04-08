@@ -4,8 +4,10 @@ from typing import Any
 
 from autogen import OpenAIWrapper
 
-from ..handlers import ConfigHandler
+from ..handlers.config_handler import ConfigHandler
 from .agent import Agent
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -16,8 +18,7 @@ class Summarizer(Agent):
         llm_config: dict[str, Any],
         n_guards: int,
         n_prisoners: int,
-    ):
-        name = self._get_name()
+    ) -> None:
         context = ConfigHandler().get_section("Summarizer")
         super().__init__(
             llm_config=llm_config,
@@ -25,15 +26,13 @@ class Summarizer(Agent):
             n_prisoners=n_prisoners,
             agent_fields=list(context.keys())[1:],
             context=context,
-            id=name,
+            id=self._get_name(),
         )
         self.system_message_oai = {"content": self.system_message, "role": "system"}
         self.llm = OpenAIWrapper(config_list=llm_config["config_list"])
+        logger.debug(f"Summarizer created")
 
-    def __post_init__(self) -> None:
-        logging.debug(f"{self.id} created")
-
-    def generate_summary(self, previous_conversation, round_number: int):
+    def generate_summary(self, previous_conversation, round_number: int) -> str:
         summary = self.llm.create(
             messages=[self.system_message_oai] + previous_conversation
         )
