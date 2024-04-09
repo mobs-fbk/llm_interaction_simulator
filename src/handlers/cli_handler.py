@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CLIHandler:
-    db_handler: DBHandler = field(init=False)
+    db: DBHandler = field(init=False)
 
     def __post_init__(self) -> None:
-        self.db_handler = DBHandler()
+        self.db = DBHandler()
 
     def select_main_action(self) -> str:
         """Let the user choose to create a new experiment or select an existing one."""
@@ -42,11 +42,11 @@ class CLIHandler:
             "Enter a description for the new experiment (optional): "
         )
         config["creation_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        config["creator"] = self.db_handler.config["user"]
+        config["creator"] = self.db.config["user"]
         config["conversations"] = []
         config["interesting"] = False
         experiment = Experiment(config=config)
-        experiment.id = self.db_handler.save_experiment(doc=experiment.to_document())
+        experiment.id = self.db.save_experiment(doc=experiment.to_document())
         return experiment
 
     def select_experiment(self) -> Experiment:

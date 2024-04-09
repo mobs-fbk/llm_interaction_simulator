@@ -16,39 +16,39 @@ def main() -> None:
             "asyncio",
         ],
     )
-    cli_handler = CLIHandler()
+    cli = CLIHandler()
 
     while True:
-        action = cli_handler.select_main_action()  # ✅
+        action = cli.select_main_action()  # ✅
         if action == "Create a new experiment":
-            experiment = cli_handler.create_experiment()  # ✅
+            experiment = cli.create_experiment()  # ✅
         elif action == "Select an experiment":
-            experiment = cli_handler.select_experiment()  # ❌
+            experiment = cli.select_experiment()  # ❌
         else:
             break  # Exit the application
         while True:
-            action = cli_handler.select_experiment_action()  # ✅
+            action = cli.select_experiment_action()  # ✅
             if action == "Perform new conversations":
-                cli_handler.perform_conversations(experiment)  # ❌
+                cli.perform_conversations(experiment)  # ❌
                 continue
             elif action == "View old conversations":
-                conversation = cli_handler.select_conversation(experiment)  # ❌
+                conversation = cli.select_conversation(experiment)  # ❌
             elif action == "Update experiment description":
-                cli_handler.update_experiment_description(experiment)  # ❌
+                cli.update_experiment_description(experiment)  # ❌
                 continue
             elif action == "Delete experiment":
-                cli_handler.delete_experiment(experiment)  # ❌
+                cli.delete_experiment(experiment)  # ❌
                 break
             else:  # Go back
                 break
             while True:
-                action = cli_handler.select_conversation_action()  # ✅
+                action = cli.select_conversation_action()  # ✅
                 if action == "View conversation":
-                    cli_handler.view_conversation(conversation)  # ❌
+                    cli.view_conversation(conversation)  # ❌
                 elif action == "Update conversation":
-                    cli_handler.update_conversation(conversation)  # ❌
+                    cli.update_conversation(conversation)  # ❌
                 elif action == "Delete conversation":
-                    cli_handler.delete_conversation(conversation)  # ❌
+                    cli.delete_conversation(conversation)  # ❌
                 else:  # Go back
                     break
 
