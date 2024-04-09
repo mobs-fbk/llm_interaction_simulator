@@ -1,8 +1,7 @@
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import cast
+from typing import Union, cast
 
 import autogen
 from bson.objectid import ObjectId
@@ -10,15 +9,16 @@ from bson.objectid import ObjectId
 from ..agents import Agent, Guard, Manager, Prisoner, Researcher, Summarizer
 from ..serializers.document_serializer import DocumentSerializer
 from .chat import Chat
+from .conversation import Conversation
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class Experiment(DocumentSerializer):
+    config: dict
     id: ObjectId = field(init=False)
-    conversations: list[ObjectId] = field(default_factory=list)
-    config: dict = field(init=False)
+    conversations: list[Union[ObjectId, Conversation]] = field(default_factory=list)
     researcher: Researcher = field(init=False)
     agents: list[Agent] = field(init=False)
     group_chat: Chat = field(init=False)
@@ -88,3 +88,22 @@ class Experiment(DocumentSerializer):
 
     def to_document(self) -> dict:
         return self.config.copy()
+
+    def perform(self) -> Conversation:
+        start_message = self.config["researcher_initial_message"]
+        conversation = Conversation()
+        for i in range(int(self.config["experiment_days"])):
+            self.researcher.initiate_chat(
+                recipient=self.manager, clear_history=True, message=start_message
+            )
+            raw_conversation = self.group_chat.messages[1:]
+            summary = self.summarizer.generate_summary(
+                previous_conversation=raw_conversation, round_number=i + 1
+            )
+            conversation.add_daily_conversation(raw_conversation, day=i + 1)
+            start_message += "\n" + summary
+        logger.info("Experiment complete")
+        return conversation
+
+    def fetch_conversations(self) -> None:
+        pass

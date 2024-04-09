@@ -8,7 +8,7 @@ from typing import Any
 from autogen import ConversableAgent
 
 from ..classes.system_prompt import SystemPrompt
-from ..handlers.config_handler import ConfigHandler
+from ..handlers import config_handler
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class Agent(ConversableAgent):
         id: str,
     ) -> None:
         self.id = id
-        shared_context = ConfigHandler().get_section("Shared")
+        shared_context = config_handler.get_section("Shared")
         full_context = {**context, **shared_context}
         self.system_prompt = SystemPrompt(
             context=full_context,
@@ -43,7 +43,7 @@ class Agent(ConversableAgent):
             human_input_mode="NEVER",
             code_execution_config=False,
         )
-        logger.debug(
+        logger.info(
             f"Agent {self.id} created with system prompt:\n---\n{self.system_prompt.content}\n---\n"
         )
 

@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 
-from ..handlers.config_handler import ConfigHandler
+from ..handlers import config_handler
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class SystemPrompt:
         return content
 
     def _update_prompt_tags(self, content: str, n_guards: int, n_prisoners: int):
-        tags_strings = ConfigHandler().get_section("Tags")
+        tags_strings = config_handler.get_section("Tags")
 
         tags_dict = {
             k: [tag.strip() for tag in v.split(",")] for k, v in tags_strings.items()

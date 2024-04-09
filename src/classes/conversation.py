@@ -1,13 +1,19 @@
 from dataclasses import dataclass, field
+from typing import Union
+
+from bson.objectid import ObjectId
 
 from ..serializers import DocumentSerializer
 from .message import Message
 
 
 @dataclass
-class Conversation:
-
-    messages: list[Message] = field(default_factory=list)
+class Conversation(DocumentSerializer):
+    id: ObjectId = field(init=False)
+    completed: bool = False
+    description: str = ""
+    interesting: bool = False
+    messages: list[Union[ObjectId, Message]] = field(default_factory=list)
 
     def add_daily_conversation(self, raw_conversation: list[dict], day: int) -> None:
         messages = []
@@ -23,11 +29,8 @@ class Conversation:
             )
         self.messages.extend(messages)
 
-    def to_document(self) -> list[dict]:
-        return []
+    def to_document(self) -> dict:
+        return {}
 
-    def load_from_db(self):
-        pass
-
-    def fetch_conversations(self):
+    def fetch_messages(self) -> None:
         pass

@@ -1,10 +1,13 @@
 from dataclasses import dataclass, field
 
+from bson.objectid import ObjectId
+
 from ..serializers import DocumentSerializer
 
 
 @dataclass
 class Message(DocumentSerializer):
+    id: ObjectId = field(init=False)
     index: int
     day: int
     role: str

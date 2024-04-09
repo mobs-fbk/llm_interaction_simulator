@@ -1,4 +1,3 @@
-import datetime
 import json
 import logging
 from dataclasses import dataclass, field
@@ -9,6 +8,7 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
 from ..classes.conversation import Conversation
+from .config_handler import config_handler
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,8 @@ class DBHandler:
     config: dict = field(init=False)
     db: Database = field(init=False)
 
-    def __init__(self, config: dict) -> None:
-        self.config = config
+    def __init__(self) -> None:
+        self.config = config_handler.get_section(name="Database")
         self.db = self._get_db(self.config["db_name"])
         logger.debug(
             f"Connected to the database with config:\n {json.dumps(self.config, indent=2)}"
@@ -46,8 +46,6 @@ class DBHandler:
         return experiments
 
     def save_experiment(self, doc: dict) -> ObjectId:
-        doc["timestamp"] = datetime.datetime.now()
-        doc["user"] = self.config["user"]
         experiment_id = self.db.experiments.insert_one(doc).inserted_id
         logger.debug(f"Experiment saved with ID: {experiment_id}")
         return experiment_id
@@ -56,7 +54,9 @@ class DBHandler:
         self, experiment_id: ObjectId, conversation: Conversation
     ) -> None:
         for message in conversation.messages:
-            message_doc = message.to_document()
+            if isinstance(message, ObjectId):
+                logger.error("Message is not a document")
+            message_doc = message.to_document()  # type: ignore
             message_doc["experiment_id"] = experiment_id
             message_id = self.db.messages.insert_one(message_doc).inserted_id
             logger.debug(f"Message saved with ID: {message_id}")

@@ -4,7 +4,7 @@ from typing import Any
 
 from autogen import OpenAIWrapper
 
-from ..handlers.config_handler import ConfigHandler
+from ..handlers import config_handler
 from .agent import Agent
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class Summarizer(Agent):
         n_guards: int,
         n_prisoners: int,
     ) -> None:
-        context = ConfigHandler().get_section("Summarizer")
+        context = config_handler.get_section("Summarizer")
         super().__init__(
             llm_config=llm_config,
             n_guards=n_guards,

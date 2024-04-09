@@ -19,3 +19,6 @@ class ConfigHandler:
         logger.debug(f"Retrieved section: {name}")
         section = dict(self.config[name])
         return section
+
+
+config_handler = ConfigHandler()

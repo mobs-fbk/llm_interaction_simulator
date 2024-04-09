@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 
-from ..handlers.config_handler import ConfigHandler
+from ..handlers import config_handler
 from .agent import Agent
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class Prisoner(Agent):
         agent_fields: list[str] = [],
     ) -> None:
         name = self._get_name()
-        context = ConfigHandler().get_section("Prisoner")
+        context = config_handler.get_section("Prisoner")
         super().__init__(
             llm_config=llm_config,
             n_guards=n_guards,
