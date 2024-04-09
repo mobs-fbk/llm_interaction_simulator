@@ -83,9 +83,9 @@ class CLIHandler:
         # Take as input the number of conversations to perform
         pass
 
-    def select_conversation(self, experiment: Experiment) -> None:
+    def select_conversation(self, experiment: Experiment) -> Conversation:
         # Fetch conversation list from db_handler
-        pass
+        return Conversation()
 
     def update_experiment_description(self, experiment: Experiment) -> None:
         # Update experiment description and save it to db_handler
