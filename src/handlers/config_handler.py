@@ -21,4 +21,4 @@ class ConfigHandler:
         return section
 
 
-config_handler = ConfigHandler()
+configurator = ConfigHandler()

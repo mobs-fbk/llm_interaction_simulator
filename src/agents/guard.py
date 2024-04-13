@@ -1,39 +1,58 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
-from ..handlers import config_handler
-from .agent import Agent
+from ..classes.system_prompt import SystemPrompt
+from ..handlers.config_handler import configurator
+from .agent import CustomAgent
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Guard(Agent):
-
+class Guard(CustomAgent):
     def __init__(
         self,
         llm_config: dict,
-        n_guards: int,
-        n_prisoners: int,
-        agent_fields: list[str] = [],
+        system_message: str,
     ) -> None:
         name = self._get_name()
-        context = config_handler.get_section("Guard")
         super().__init__(
+            name=name,
             llm_config=llm_config,
-            n_guards=n_guards,
-            n_prisoners=n_prisoners,
-            agent_fields=agent_fields,
-            context=context,
-            id=name,
+            system_message=system_message,
         )
         logger.debug(f"Guard {name} created")
+
+    @classmethod
+    def from_config(
+        cls,
+        llm_config: dict[str, Any],
+        n_guards: int,
+        n_prisoners: int,
+        agent_fields: list[str],
+    ) -> "Guard":
+        context = configurator.get_section("Guard")
+        shared_context = configurator.get_section("Shared")
+        full_context = {**context, **shared_context}
+        system_prompt = SystemPrompt(
+            context=full_context,
+            fields=agent_fields,
+            n_guards=n_guards,
+            n_prisoners=n_prisoners,
+        )
+        return cls(llm_config=llm_config, system_message=system_prompt.content)
+
+    @classmethod
+    def from_prompt(cls, llm_config, system_prompt) -> "Guard":
+        return cls(llm_config=llm_config, system_message=system_prompt)
 
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def _get_name(self) -> str:
+    @classmethod
+    def _get_name(cls) -> str:
         prefix = "Guard_G-"
-        random_string = self._get_random_numeric_string()
+        random_string = cls._get_random_numeric_string()
         name = prefix + random_string
         return name

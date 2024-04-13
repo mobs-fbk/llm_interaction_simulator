@@ -3,11 +3,12 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 import inquirer
+from bson.objectid import ObjectId
 from prompt_toolkit import prompt
 
 from ..classes.conversation import Conversation
 from ..classes.experiment import Experiment
-from .config_handler import config_handler
+from .config_handler import configurator
 from .db_handler import DBHandler
 
 logger = logging.getLogger(__name__)
@@ -37,24 +38,48 @@ class CLIHandler:
 
     def create_experiment(self) -> Experiment:
         """Handle the creation of a new experiment."""
-        config = config_handler.get_section(name="Experiment")
-        config["description"] = prompt(
-            "Enter a description for the new experiment (optional): "
-        )
+        config = configurator.get_section(name="Experiment")
+        config["note"] = prompt("Enter a note for the experiment (optional): ")
         config["creation_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         config["creator"] = self.db.config["user"]
-        config["conversations"] = []
         config["interesting"] = False
         experiment = Experiment(config=config)
-        experiment.id = self.db.save_experiment(doc=experiment.to_document())
+        config["conversations"] = []
+        config["guard_prompt"] = experiment.agents[0].system_message
+        config["prisoner_prompt"] = experiment.agents[-1].system_message
+        config["summarizer_prompt"] = experiment.summarizer.system_message
+        experiment.id = self.db.save_experiment(experiment=experiment)
         return experiment
 
     def select_experiment(self) -> Experiment:
         """Let the user select an experiment from a list of existing experiments."""
         # Fetch experiment list from db_handler
+        experiments = self.db.get_experiments()
+        if not experiments:
+            logger.info("No experiments found. Creating a new experiment.")
+            return self.create_experiment()
         # Show them in a selection menu
-        # Depending on the user's choice, proceed to the experiment_menu
-        return Experiment(config={})
+        choices = []
+        for experiment in experiments:
+            choice = f"{experiment['_id']}\t# Conversations: {len(experiment['conversations'])}\tCreator: {experiment['creator']} [{experiment['creation_date']}]"
+            if experiment["note"]:
+                choice += f"\tNote: {experiment['note']}"
+            if experiment["interesting"]:
+                choice += " ⭐"
+            choices.append((choice, experiment["_id"]))
+        questions = [
+            inquirer.List(
+                "experiment_id",
+                message="Select an experiment:",
+                choices=choices,
+            )
+        ]
+        experiment_id = inquirer.prompt(questions)
+        if experiment_id is not None:
+            experiment = self.db.get_experiment(experiment_id["experiment_id"])
+        else:
+            experiment = self.create_experiment()
+        return experiment
 
     def select_experiment_action(self) -> str:
         """Let the user choose what to do with the selected experiment."""
@@ -64,8 +89,8 @@ class CLIHandler:
                 message="Select action:",
                 choices=[
                     "Perform new conversations",
-                    "View old conversations",
-                    "Update experiment description",
+                    "Select old conversations",
+                    "Update experiment",
                     "Delete experiment",
                     "Go back",
                 ],
@@ -78,22 +103,69 @@ class CLIHandler:
             return "Exit"
 
     # Placeholder methods for each action
-    def perform_conversations(self, experiment: Experiment) -> None:
-        # Perform new conversation and save it to db_handler
-        # Take as input the number of conversations to perform
-        pass
+    def perform_conversations(self, experiment: Experiment) -> list[ObjectId]:
+        n_conversations = prompt("How many conversations would you like to perform? ")
+        while not n_conversations.isdigit() or int(n_conversations) < 1:
+            n_conversations = prompt(
+                "Invalid input. Please enter a number greater than 0: "
+            )
+        conversation_ids = []
+        for index in range(int(n_conversations)):
+            logger.info(f"Performing conversation [{index + 1}/{n_conversations}]")
+            conversation = experiment.perform()
+            conversation.id = self.db.save_conversation(conversation)
+            conversation_ids.append(conversation.id)
+            self.db.add_conversation(experiment.id, conversation.id)
+        logger.info(f"Performed and saved {n_conversations} conversations")
+        return conversation_ids
 
-    def select_conversation(self, experiment: Experiment) -> Conversation:
-        # Fetch conversation list from db_handler
-        return Conversation()
+    def select_conversation(self, experiment: Experiment) -> dict:
+        conversations = self.db.get_conversations(experiment.conversations_ids)
+        if not conversations:
+            logger.info("No conversations found for this experiment.")
+            return None  # type: ignore
+        choices = []
+        for conversation in conversations:
+            choice = f"{conversation['_id']}\t [{conversation['creation_date']}]"
+            if conversation["note"]:
+                choice += f"\tNote: {conversation['note']}"
+            if conversation["interesting"]:
+                choice += " ⭐"
+            choices.append((choice, conversation["_id"]))
+        questions = [
+            inquirer.List(
+                "conversation_id",
+                message="Select a conversation:",
+                choices=choices,
+            )
+        ]
+        conversation_id = inquirer.prompt(questions)
+        if conversation_id is not None:
+            conversation = self.db.get_conversation(conversation_id["conversation_id"])
+        else:
+            raise ValueError("Conversation not found.")
+        return conversation
 
-    def update_experiment_description(self, experiment: Experiment) -> None:
-        # Update experiment description and save it to db_handler
-        # NOTE: Also a toggle to set the experiment as interesting or not
-        pass
+    def update_experiment(self, experiment: Experiment) -> None:
+        new_desc = prompt("Enter a note for the experiment (optional): ")
+        if new_desc:
+            experiment.config["note"] = new_desc
+        interesting = prompt("Is this experiment interesting? (y/n): ")
+        if interesting.lower() == "y":
+            experiment.config["interesting"] = True
+        self.db.update_experiment(experiment)
+
+    def update_conversation(self, conversation: dict) -> None:
+        new_desc = prompt("Enter a note for the new conversation (optional): ")
+        if new_desc:
+            conversation["note"] = new_desc
+        interesting = prompt("Is this conversation interesting? (y/n): ")
+        if interesting.lower() == "y":
+            conversation["interesting"] = True
+        self.db.update_conversation(conversation)
 
     def delete_experiment(self, experiment: Experiment) -> None:
-        pass
+        self.db.delete_experiment(experiment)
 
     def select_conversation_action(self) -> str:
         """Let the user choose what to do with the selected conversation."""
@@ -115,11 +187,20 @@ class CLIHandler:
         else:
             return "Exit"
 
-    def view_conversation(self, conversation: Conversation) -> None:
-        pass
+    def view_conversation(self, conversation: dict) -> None:
+        messages = self.db.get_messages(conversation["messages"])
+        color_codes = {
+            "Researcher": "\033[94m",  # Blue
+            "Guard": "\033[93m",  # Yellow
+            "Prisoner": "\033[92m",  # Green
+        }
+        for message in messages:
+            color_code = color_codes.get(message["role"], "\033[0m")
+            print(
+                f"{color_code}[Day {message['day']}] {message['speaker']}\033[0m:\n{message['content']}"
+            )
 
-    def update_conversation(self, conversation: Conversation) -> None:
-        pass
-
-    def delete_conversation(self, conversation: Conversation) -> None:
-        pass
+    def delete_conversation(self, experiment: Experiment, conversation: dict) -> None:
+        experiment.conversations_ids.remove(conversation["_id"])
+        self.db.update_experiment(experiment)
+        self.db.delete_conversation(conversation)

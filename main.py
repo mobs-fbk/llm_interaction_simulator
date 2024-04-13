@@ -5,7 +5,7 @@ from src.handlers import CLIHandler
 
 def main() -> None:
     ItakelloLogging(
-        debug=False,
+        debug=True,
         excluded_modules=[
             "docker.utils.config",
             "docker.auth",
@@ -14,6 +14,7 @@ def main() -> None:
             "httpcore.http11",
             "autogen.io.base",
             "asyncio",
+            "openai._base_client",  # Remove to see API requests debug logs
         ],
     )
     cli = CLIHandler()
@@ -23,32 +24,36 @@ def main() -> None:
         if action == "Create a new experiment":
             experiment = cli.create_experiment()  # ✅
         elif action == "Select an experiment":
-            experiment = cli.select_experiment()  # ❌
+            experiment = cli.select_experiment()  # ✅
         else:
             break  # Exit the application
         while True:
             action = cli.select_experiment_action()  # ✅
             if action == "Perform new conversations":
-                cli.perform_conversations(experiment)  # ❌
+                new_conversations = cli.perform_conversations(experiment)  # ✅
+                experiment.conversations_ids.extend(new_conversations)
                 continue
-            elif action == "View old conversations":
-                conversation = cli.select_conversation(experiment)  # ❌
-            elif action == "Update experiment description":
-                cli.update_experiment_description(experiment)  # ❌
+            elif action == "Select old conversations":
+                conversation_dict = cli.select_conversation(experiment)  # ✅
+                if conversation_dict == None:
+                    continue
+            elif action == "Update experiment":
+                cli.update_experiment(experiment)  # ✅
                 continue
             elif action == "Delete experiment":
-                cli.delete_experiment(experiment)  # ❌
+                cli.delete_experiment(experiment)  # ✅
                 break
             else:  # Go back
                 break
             while True:
                 action = cli.select_conversation_action()  # ✅
                 if action == "View conversation":
-                    cli.view_conversation(conversation)  # ❌
+                    cli.view_conversation(conversation_dict)  # ✅
                 elif action == "Update conversation":
-                    cli.update_conversation(conversation)  # ❌
+                    cli.update_conversation(conversation_dict)  # ✅
                 elif action == "Delete conversation":
-                    cli.delete_conversation(conversation)  # ❌
+                    cli.delete_conversation(experiment, conversation_dict)  # ✅
+                    break
                 else:  # Go back
                     break
 

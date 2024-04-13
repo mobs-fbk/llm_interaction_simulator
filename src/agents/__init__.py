@@ -1,4 +1,4 @@
-from .agent import Agent
+from .agent import CustomAgent
 from .guard import Guard
 from .manager import Manager
 from .prisoner import Prisoner

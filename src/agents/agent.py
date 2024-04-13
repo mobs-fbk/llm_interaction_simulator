@@ -2,60 +2,63 @@ import logging
 import random
 import string
 from abc import abstractmethod
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Union
 
 from autogen import ConversableAgent
+from autogen.agentchat.agent import Agent
 
-from ..classes.system_prompt import SystemPrompt
-from ..handlers import config_handler
+# from autogen.agentchat.agent import Agent
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Agent(ConversableAgent):
-    id: str = field(init=False)
-    system_prompt: SystemPrompt = field(init=False)
+class CustomAgent(ConversableAgent):
 
-    def __init__(
-        self,
-        llm_config: dict[str, Any],
-        n_guards: int,
-        n_prisoners: int,
-        agent_fields: list[str],
-        context: dict,
-        id: str,
-    ) -> None:
-        self.id = id
-        shared_context = config_handler.get_section("Shared")
-        full_context = {**context, **shared_context}
-        self.system_prompt = SystemPrompt(
-            context=full_context,
-            fields=agent_fields,
-            n_guards=n_guards,
-            n_prisoners=n_prisoners,
-        )
+    def __init__(self, name: str, llm_config: dict, system_message: str) -> None:
         super().__init__(
-            name=self.id,
+            name=name,
             llm_config=llm_config,
-            system_message=self.system_prompt.content,
+            system_message=system_message,
             human_input_mode="NEVER",
             code_execution_config=False,
         )
         logger.info(
-            f"Agent {self.id} created with system prompt:\n---\n{self.system_prompt.content}\n---\n"
+            f"Agent {name} created with system prompt:\n---\n{system_message}\n---\n"
         )
+
+    def generate_reply(
+        self,
+        messages: Optional[List[Dict[str, Any]]] = None,
+        sender: Optional[Union["Agent", None]] = None,
+        **kwargs: Any,
+    ) -> Union[str, Dict, None]:
+        warn = ["Guard:", "Prisoner:"]
+        reply = super().generate_reply(messages=messages, sender=sender, **kwargs)
+        reply = str(reply).strip()
+        logger.debug(f"Raw reply:\n---\n{reply}\n---\n")
+        for w in warn:
+            if w == reply[: len(w)]:
+                reply = reply[len(w) :]
+        for w in warn:
+            if w in reply:
+                reply = reply.split(w)[0]
+        reply = reply.strip()
+        logger.debug(f"Processed reply:\n---\n{reply}\n---\n")
+        return reply
 
     def __hash__(self) -> int:
         return super().__hash__()
 
     def __str__(self) -> str:
-        return f"Agent: {self.id}" + f"\nSystem Prompt: {self.system_prompt.content}\n"
+        return f"Agent: {self.name}" + f"\nSystem Prompt: {self.system_message}\n"
 
-    def _get_random_numeric_string(self, lenght: int = 3):
+    @classmethod
+    def _get_random_numeric_string(cls, lenght: int = 3) -> str:
         return "".join(random.choices(string.digits, k=lenght))
 
+    @classmethod
     @abstractmethod
-    def _get_name(self) -> str:
+    def _get_name(cls) -> str:
         pass

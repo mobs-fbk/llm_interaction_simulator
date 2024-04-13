@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Union
 
 from bson.objectid import ObjectId
@@ -10,10 +11,10 @@ from .message import Message
 @dataclass
 class Conversation(DocumentSerializer):
     id: ObjectId = field(init=False)
-    completed: bool = False
-    description: str = ""
+    creation_date: datetime = field(default_factory=datetime.now)
+    note: str = ""
     interesting: bool = False
-    messages: list[Union[ObjectId, Message]] = field(default_factory=list)
+    messages_ids: list[Union[ObjectId, Message]] = field(default_factory=list)
 
     def add_daily_conversation(self, raw_conversation: list[dict], day: int) -> None:
         messages = []
@@ -27,10 +28,21 @@ class Conversation(DocumentSerializer):
                     content=message["content"],
                 )
             )
-        self.messages.extend(messages)
+        self.messages_ids.extend(messages)
 
     def to_document(self) -> dict:
-        return {}
+        messages = []
+        for message in self.messages_ids:
+            if isinstance(message, Message):
+                messages.append(message.id)
+            else:
+                messages.append(message)
+        return {
+            "note": self.note,
+            "creation_date": self.creation_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "interesting": self.interesting,
+            "messages": messages,
+        }
 
     def fetch_messages(self) -> None:
         pass
