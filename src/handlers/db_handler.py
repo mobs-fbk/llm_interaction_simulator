@@ -4,43 +4,48 @@ from dataclasses import dataclass, field
 
 from bson.objectid import ObjectId
 from pymongo.database import Database
+from pymongo.errors import ConfigurationError, OperationFailure
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
 from ..classes.conversation import Conversation
 from ..classes.experiment import Experiment
 from ..classes.message import Message
-from .config_handler import configurator
+
+# from .config_handler import configurator
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class DBHandler:
-    config: dict = field(init=False)
+    client: MongoClient = field(init=False)
     db: Database = field(init=False)
 
-    def __init__(self) -> None:
-        self.config = configurator.get_section(name="Database")
-        self.db = self._get_db(self.config["db_name"])
-        logger.debug(
-            f"Connected to the database with config:\n {json.dumps(self.config, indent=2)}"
-        )
+    def __init__(self, username: str, password: str, cluster_url: str) -> None:
+        try:
+            self.client = MongoClient(
+                f"mongodb+srv://{username}:{password}@{cluster_url}/",
+                server_api=ServerApi("1"),
+            )
+            # Force a call to the server to establish a connection
+            self.client.admin.command("ping")
+            logger.debug("MongoDB connection established.")
+        except ConfigurationError as e:
+            raise ValueError("Invalid cluster URL") from e
+        except OperationFailure as e:
+            raise PermissionError("Authentication failed") from e
 
-    def _get_db(self, db_name: str) -> Database:
-        uri = self._get_db_uri()
-        client = MongoClient(uri, server_api=ServerApi("1"))
-        db = client[db_name]
-        logger.debug(f"Database: [{db_name}] selected")
-        return db
+    def list_databases(self) -> list[str]:
+        databases = self.client.list_database_names()
+        databases.remove("admin")
+        databases.remove("local")
+        logger.debug(f"Available databases: {databases}")
+        return databases
 
-    def _get_db_uri(self) -> str:
-        uri = "mongodb+srv://<user>:<password>@<cluster_url>/?retryWrites=true&w=majority&appName=Cluster0"
-        uri = uri.replace("<user>", self.config["user"])
-        uri = uri.replace("<password>", self.config["password"])
-        uri = uri.replace("<cluster_url>", self.config["cluster_url"])
-        logger.debug(f"Database URI: {uri}")
-        return uri
+    def select_database(self, database: str) -> None:
+        self.db = self.client[database]
+        logger.debug(f"Selected database: {database}")
 
     def get_experiments(self) -> list[dict]:
         experiments = list(self.db.experiments.find())

@@ -5,7 +5,8 @@ from typing import Any
 from autogen import OpenAIWrapper
 
 from ..classes.system_prompt import SystemPrompt
-from ..handlers.config_handler import configurator
+
+# from ..handlers.config_handler import configurator
 from .agent import CustomAgent
 
 logger = logging.getLogger(__name__)
@@ -37,8 +38,8 @@ class Summarizer(CustomAgent):
         n_prisoners: int,
         agent_fields: list[str],
     ) -> "Summarizer":
-        context = configurator.get_section("Summarizer")
-        shared_context = configurator.get_section("Shared")
+        context = {}  # configurator.get_section("Summarizer")
+        shared_context = {}  # configurator.get_section("Shared")
         full_context = {**context, **shared_context}
         system_prompt = SystemPrompt(
             context=full_context,

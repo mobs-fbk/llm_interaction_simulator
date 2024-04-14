@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Union
 
 import inquirer
 from bson.objectid import ObjectId
@@ -8,7 +9,8 @@ from prompt_toolkit import prompt
 
 from ..classes.conversation import Conversation
 from ..classes.experiment import Experiment
-from .config_handler import configurator
+
+# from .config_handler import configurator
 from .db_handler import DBHandler
 
 logger = logging.getLogger(__name__)
@@ -19,29 +21,67 @@ class CLIHandler:
     db: DBHandler = field(init=False)
 
     def __post_init__(self) -> None:
-        self.db = DBHandler()
+        self.db = self._get_db_handler()
+
+    def _confirm(self, message: str) -> bool:
+        return inquirer.confirm(message=message)
+
+    def _input(self, message: str) -> str:
+        return inquirer.text(message)
+
+    def _select(
+        self, message: str, choices: Union[list[str], list[tuple[str, str]]]
+    ) -> str:
+        return inquirer.list_input(message=message, choices=choices)
+
+    def _password(self, message: str) -> str:
+        return inquirer.password(message=message)
+
+    def _authenticate_user(self) -> DBHandler:
+        while True:
+            username = self._input("Enter your username: ")
+            password = self._password("Enter your password: ")
+            cluster_url = self._input("Enter your MongoDB cluster URL: ")
+
+            try:
+                db_handler = DBHandler(
+                    username=username, password=password, cluster_url=cluster_url
+                )
+                logger.info("Connection established successfully.")
+                return db_handler
+            except ValueError as e:
+                logger.error(f"Failed to connect: {e}.")
+                logger.info("Please check the URI and try again.")
+            except PermissionError as e:
+                logger.error(f"Failed to connect: {e}")
+                logger.info("Please check your credentials and try again.")
+            except Exception as e:
+                logger.error(f"An error occurred: {e}")
+                logger.info("Please try again.")
+
+    def _get_db_handler(self) -> DBHandler:
+        db_handler = self._authenticate_user()
+        db_list = db_handler.list_databases()
+        if not db_list:
+            logger.error("No databases found. Exiting.")
+            exit()
+        selected_db = self._select("Select a database: ", db_list)
+        db_handler.select_database(selected_db)
+        return db_handler
 
     def select_main_action(self) -> str:
         """Let the user choose to create a new experiment or select an existing one."""
-        questions = [
-            inquirer.List(
-                "action",
-                message="What would you like to do?",
-                choices=["Create a new experiment", "Select an experiment", "Exit"],
-            )
-        ]
-        action = inquirer.prompt(questions)
-        if action is not None:
-            return action["action"]
-        else:
-            return "Exit"
+        return self._select(
+            message="What would you like to do?",
+            choices=["Create a new experiment", "Select an experiment", "Exit"],
+        )
 
     def create_experiment(self) -> Experiment:
         """Handle the creation of a new experiment."""
-        config = configurator.get_section(name="Experiment")
+        config = {}  # configurator.get_section(name="Experiment")
         config["note"] = prompt("Enter a note for the experiment (optional): ")
         config["creation_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        config["creator"] = self.db.config["user"]
+        # config["creator"] = self.db.config["user"]
         config["interesting"] = False
         experiment = Experiment(config=config)
         config["conversations"] = []
