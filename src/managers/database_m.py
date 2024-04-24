@@ -47,16 +47,13 @@ class DatabaseManager:
         self.db = self.client[database]
         logger.debug(f"Selected database: {database}")
 
-    def save_experiment(self, experiment: Experiment) -> ObjectId:
-        experiment_id = self.db.experiments.insert_one(
-            experiment.to_document()
-        ).inserted_id
-        logger.debug(f"Experiment saved with ID: {experiment_id}")
-        return experiment_id
+    def save_experiment(self, experiment: Experiment) -> None:
+        self.db.experiments.insert_one(experiment.to_document())
+        logger.debug(f"Experiment saved with ID: {experiment.id}")
 
-    def get_experiments(self) -> list[Experiment]:
+    def get_experiments(self) -> dict[str, Experiment]:
         docs = list(self.db.experiments.find())
-        experiments = [Experiment.from_document(doc) for doc in docs]
+        experiments = {str(doc["_id"]): Experiment.from_document(doc) for doc in docs}
         logger.debug(f"Experiments retrieved: {len(experiments)}")
         return experiments
 

@@ -36,8 +36,8 @@ class AgentManager(DocumentSerializer):
         }
         logger.debug(
             f"Added:\n"
-            + f"- {len(roles)} agents\n"
-            + f"- {len(shared_sections)} sections\n"
+            + f"- {len(roles)} roles\n"
+            + f"- {len(shared_sections)} shared sections\n"
             + f"- {len(summarizer_sections)} summarizer sections\n"
             + f"- {len(placeholders)} placeholders"
         )
@@ -54,21 +54,21 @@ class AgentManager(DocumentSerializer):
             [str(placeholder) for placeholder in self.placeholders.values()]
         )
         return (
-            f"\033[1mRoles\033[0m:\n{roles}\n"
-            + f"\033[1mShared sections\033[0m:\n{shared_sections}\n"
-            + f"\033[1mSummarizer sections\033[0m:\n{summarizer_sections}\n"
+            f"\033[1mRoles\033[0m:\n{roles}\n\n"
+            + f"\033[1mShared sections\033[0m:\n{shared_sections}\n\n"
+            + f"\033[1mSummarizer sections\033[0m:\n{summarizer_sections}\n\n"
             + f"\033[1mGlobal placeholders\033[0m:\n{placeholders}"
         )
 
     @classmethod
     def from_document(cls, doc: dict) -> "AgentManager":
         return cls(
-            roles=[role.from_document() for role in doc["roles"]],
+            roles=[Role.from_document(role) for role in doc["roles"]],
             shared_sections=[
-                section.from_document() for section in doc["shared_sections"]
+                Section.from_document(section) for section in doc["shared_sections"]
             ],
             summarizer_sections=[
-                section.from_document() for section in doc["summarizer_sections"]
+                Section.from_document(section) for section in doc["summarizer_sections"]
             ],
             placeholders=[
                 Placeholder.from_document(placeholder)

@@ -32,7 +32,7 @@ class Role(DocumentSerializer):
         }
         logger.debug(
             f"Created new role [{self.name}] with:\n"
-            + f"- {len(self.sections)} sections\n"
+            + f"- {len(self.sections)} private sections\n"
             + f"- {len(self.placeholders)} placeholders"
         )
 

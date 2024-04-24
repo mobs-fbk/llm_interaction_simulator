@@ -117,7 +117,7 @@ class UIManager:
                 f"No databases found. Creating a new one named {selected_db}."
             )
         else:
-            selected_db = self._select_one("Select a database: ", db_list)
+            selected_db = self._select_one("Select a database", db_list)
         return selected_db
 
     def select_initial_action(self) -> str:
@@ -187,11 +187,11 @@ class UIManager:
 
     def _ask_for_section_contents(self, agent_m: AgentManager) -> None:
         shared_sections = list(agent_m.shared_sections.values())
-        non_shared_sections = list(next(iter(agent_m.roles.values())).sections.values())
+        private_sections = list(next(iter(agent_m.roles.values())).sections.values())
 
         agent_m.print_all_placeholders()
 
-        for section in sorted(shared_sections + non_shared_sections):
+        for section in sorted(shared_sections + private_sections):
             invalid_placeholders = True
             while invalid_placeholders:
                 if section in shared_sections:
@@ -248,59 +248,65 @@ class UIManager:
                     )
 
     def create_experiment(self, creator: str) -> Experiment:
-        while True:
-            # Step 1: Experiment Setup
+        # Step 1: Experiment Setup
 
-            logger.confirmation("\nStep 1: Experiment Setup\n")
+        logger.confirmation("\nStep 1: Experiment Setup\n")
 
-            starting_message = self._input_str(
-                "Enter the conversation starting message (e.g. 'Start the experiment')"
-            )
+        starting_message = self._input_str(
+            "Enter the conversation starting message (e.g. 'Start the experiment')"
+        )
 
-            llm_m = self._ask_for_llm_m()
+        llm_m = self._ask_for_llm_m()
 
-            agent_m = self._ask_for_agent_m()
+        agent_m = self._ask_for_agent_m()
 
-            # Step 2: Agent Setup
+        # Step 2: Agent Setup
 
-            logger.confirmation(
-                "\nStep 2: Agent Setup - Insert the section contents for each role\n"
-            )
+        logger.confirmation(
+            "\nStep 2: Agent Setup - Insert the section contents for each role\n"
+        )
 
-            logger.instruction(
-                "\033[1mInstructions\033[0m\033[36m:\n"
-                + "1. \033[1mShared Sections\033[0m\033[36m: If a section is shared among multiple agents, you need to provide the content only once, when prompted for the first time.\n"
-                + "2. \033[1mPlaceholders\033[0m\033[36m: Before you enter content for each section, a list of available placeholders will be displayed. These placeholders allow you to specify elements within the text that change depending on context, such as singular or plural forms based on the number of agents.\n"
-                + "3. \033[1mUsing Placeholders in Content\033[0m\033[36m: When composing content for each section, incorporate any of the displayed placeholders directly into your text. Placeholders such as <AGENT_NUM> will automatically be replaced with the actual number of agents with that role in the conversation (e.g., '1', '2', '3'...).\nSimilarly, <AGENT_NOUN> will adapt to reflect the singular or plural noun appropriate to the context, such as 'guard' for one and 'guards' for more than one.\nEXAMPLE: 'There are <GUARD_NUM> <GUARD_NOUN> in the room,' in the case of 3 guards form will become 'There are 3 guards in the room'.\n"
-                + "4. \033[1mCreating and Using New Verb Placeholders\033[0m\033[36m: You can create new placeholders specifically for verbs by using the format <AGENT_VERB>. Ensure:\n\ti. to use the base form of the verb when creating these placeholders (e.g. <AGENT_MAKE>, <AGENT_GO>, or <AGENT_EAT>).\n\tii. to insert the agent role subject to the verb (e.g. <GUARD_MAKE>).\nOnce established, these verb placeholders can be incorporated into the content of any section, adapting to the context as needed.\nEXAMPLE: 'The <GUARD_NOUN> <GUARD_MAKE> a decision,' in the singular form wll become 'The guard makes a decision'.\n"
-            )
+        logger.instruction(
+            "\033[1mInstructions\033[0m\033[36m:\n"
+            + "1. \033[1mShared Sections\033[0m\033[36m: If a section is shared among multiple agents, you need to provide the content only once, when prompted for the first time.\n"
+            + "2. \033[1mPlaceholders\033[0m\033[36m: Before you enter content for each section, a list of available placeholders will be displayed. These placeholders allow you to specify elements within the text that change depending on context, such as singular or plural forms based on the number of agents.\n"
+            + "3. \033[1mUsing Placeholders in Content\033[0m\033[36m: When composing content for each section, incorporate any of the displayed placeholders directly into your text. Placeholders such as <AGENT_NUM> will automatically be replaced with the actual number of agents with that role in the conversation (e.g., '1', '2', '3'...).\nSimilarly, <AGENT_NOUN> will adapt to reflect the singular or plural noun appropriate to the context, such as 'guard' for one and 'guards' for more than one.\nEXAMPLE: 'There are <GUARD_NUM> <GUARD_NOUN> in the room,' in the case of 3 guards form will become 'There are 3 guards in the room'.\n"
+            + "4. \033[1mCreating and Using New Verb Placeholders\033[0m\033[36m: You can create new placeholders specifically for verbs by using the format <AGENT_VERB>. Ensure:\n\ti. to use the base form of the verb when creating these placeholders (e.g. <AGENT_MAKE>, <AGENT_GO>, or <AGENT_EAT>).\n\tii. to insert the agent role subject to the verb (e.g. <GUARD_MAKE>).\nOnce established, these verb placeholders can be incorporated into the content of any section, adapting to the context as needed.\nEXAMPLE: 'The <GUARD_NOUN> <GUARD_MAKE> a decision,' in the singular form wll become 'The guard makes a decision'.\n"
+        )
 
-            logger.info(
-                f"EXAMPLE starting prompt: You are a <GUARD_NOUN> in a simulated environment, approaching <PRISONER_NUMBER> <PRISONER_NOUN>.\n"
-            )
+        logger.info(
+            f"EXAMPLE starting prompt: You are a <GUARD_NOUN> in a simulated environment, approaching <PRISONER_NUMBER> <PRISONER_NOUN>.\n"
+        )
 
-            self._ask_for_section_contents(agent_m)
+        self._ask_for_section_contents(agent_m)
 
-            favourite = self._confirm(
-                "Do you want to mark this experiment with a ⭐ for finding it more easily?"
-            )
-            note = self._input_str(
-                "Enter a note for the experiment (optional)", optional=True
-            )
+        favourite = self._confirm(
+            "Do you want to mark this experiment with a ⭐ for finding it more easily?"
+        )
+        note = self._input_str(
+            "Enter a note for the experiment (optional)", optional=True
+        )
 
-            experiment = Experiment(
-                starting_message=starting_message,
-                llm_m=llm_m,
-                agent_m=agent_m,
-                note=note,
-                favourite=favourite,
-                creator=creator,
-                conversations=[],
-            )
-            logger.instruction(f"\nReview your experiment setup:\n")
-            logger.info(str(experiment))
-            if self._confirm("Would you like to create this experiment?"):
-                return experiment
+        experiment = Experiment(
+            starting_message=starting_message,
+            llm_m=llm_m,
+            agent_m=agent_m,
+            note=note,
+            favourite=favourite,
+            creator=creator,
+            conversations=[],
+        )
+        logger.confirmation("Experiment setup completed successfully.")
+        return experiment
+
+    def update_experiment(self, experiment: Experiment) -> None:
+        new_desc = prompt("Enter a note for the experiment (optional): ")
+        if new_desc:
+            experiment.config["note"] = new_desc
+        interesting = prompt("Is this experiment interesting? (y/n): ")
+        if interesting.lower() == "y":
+            experiment.config["interesting"] = True
+        self.db_m.update_experiment(experiment)
 
         # def create_conversation() -> Conversation:
         #    return Conversation()
@@ -333,35 +339,19 @@ class UIManager:
             "Enter the starting message (e.g. 'Start the experiment'): "
         )"""
 
-    def select_experiment(self) -> Experiment:
+    def select_experiment(self, experiments: dict[str, Experiment]) -> Experiment:
         """Let the user select an experiment from a list of existing experiments."""
-        # Fetch experiment list from db_handler
-        experiments = self.db_m.get_experiments()
-        if not experiments:
-            logger.info("No experiments found. Creating a new experiment.")
-            return self.create_experiment()
         # Show them in a selection menu
         choices = []
-        for experiment in experiments:
-            choice = f"{experiment['_id']}\t# Conversations: {len(experiment['conversations'])}\tCreator: {experiment['creator']} [{experiment['creation_date']}]"
-            if experiment["note"]:
-                choice += f"\tNote: {experiment['note']}"
-            if experiment["interesting"]:
+        for experiment in experiments.values():
+            choice = f"{experiment.id}\t# Conversations: {len(experiment.conversations)}\tCreator: {experiment.creator} [{experiment.creation_date}]"
+            if experiment.note:
+                choice += f"\tNote: {experiment.note}"
+            if experiment.favourite:
                 choice += " ⭐"
-            choices.append((choice, experiment["_id"]))
-        questions = [
-            inquirer.List(
-                "experiment_id",
-                message="Select an experiment:",
-                choices=choices,
-            )
-        ]
-        experiment_id = inquirer.prompt(questions)
-        if experiment_id is not None:
-            experiment = self.db_m.get_experiment(experiment_id["experiment_id"])
-        else:
-            experiment = self.create_experiment()
-        return experiment
+            choices.append((choice, str(experiment.id)))
+        selected_id = self._select_one(message="Select an experiment", choices=choices)
+        return experiments[selected_id]
 
     def select_experiment_action(self) -> str:
         """Let the user choose what to do with the selected experiment."""
@@ -371,9 +361,10 @@ class UIManager:
                 message="Select action:",
                 choices=[
                     "Perform new conversations",
-                    "Select old conversations",
                     "Update experiment",
+                    "Update and duplicate experiment",
                     "Delete experiment",
+                    "Select old conversations",
                     "Go back",
                 ],
             )
@@ -429,15 +420,6 @@ class UIManager:
         else:
             raise ValueError("Conversation not found.")
         return conversation
-
-    def update_experiment(self, experiment: Experiment) -> None:
-        new_desc = prompt("Enter a note for the experiment (optional): ")
-        if new_desc:
-            experiment.config["note"] = new_desc
-        interesting = prompt("Is this experiment interesting? (y/n): ")
-        if interesting.lower() == "y":
-            experiment.config["interesting"] = True
-        self.db_m.update_experiment(experiment)
 
     def update_conversation(self, conversation: dict) -> None:
         new_desc = prompt("Enter a note for the new conversation (optional): ")

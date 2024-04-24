@@ -45,9 +45,9 @@ class Placeholder(DocumentSerializer):
         return self.tag
 
     @classmethod
-    def from_document(cls, doc: dict) -> "Placeholder":
+    def from_document(cls, doc: str) -> "Placeholder":
         return cls(
-            tag=doc["tag"],
+            tag=doc,
         )
 
     def to_value(self, agent_number: int) -> str:
