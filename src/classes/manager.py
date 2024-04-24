@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import autogen
 
-from ..classes.chat import Chat
+from .chat import Chat
 
 logger = logging.getLogger(__name__)
 

@@ -1,15 +1,29 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Union
 
 
 class DocumentSerializer(ABC):
 
     @abstractmethod
-    def to_document(self) -> dict:
+    def to_document(self) -> Union[dict, list, str]:
         """
         Converts the object to a dictionary representation.
 
         Returns:
             dict: A dictionary representation of the object.
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_document(cls, doc) -> Any:
+        """
+        Converts a dictionary representation to an object.
+
+        Args:
+            doc (dict): A dictionary representation of the object.
+
+        Returns:
+            DocumentSerializer: An object representation of the dictionary.
         """
         pass

@@ -8,13 +8,15 @@ from typing import Any, Dict, List, Optional, Union
 from autogen import ConversableAgent
 from autogen.agentchat.agent import Agent
 
+from ..serializers.document_serializer import DocumentSerializer
+
 # from autogen.agentchat.agent import Agent
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class CustomAgent(ConversableAgent):
+class CustomAgentOld(ConversableAgent, DocumentSerializer):
 
     def __init__(self, name: str, llm_config: dict, system_message: str) -> None:
         super().__init__(
@@ -62,3 +64,9 @@ class CustomAgent(ConversableAgent):
     @abstractmethod
     def _get_name(cls) -> str:
         pass
+
+    def to_document(self) -> dict:
+        return {
+            "name": self.name,
+            "system_message": self.system_message,
+        }

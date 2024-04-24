@@ -2,16 +2,18 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from ..classes.system_prompt import SystemPrompt
+from autogen import OpenAIWrapper
+
+from .system_prompt import SystemPrompt
 
 # from ..handlers.config_handler import configurator
-from .agent import CustomAgent
+from ..classes_old.agent_old import CustomAgentOld
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Prisoner(CustomAgent):
+class Summarizer(CustomAgentOld):
 
     def __init__(
         self,
@@ -24,7 +26,9 @@ class Prisoner(CustomAgent):
             llm_config=llm_config,
             system_message=system_message,
         )
-        logger.debug(f"Prisoner {name} created")
+        self.system_message_oai = {"content": self.system_message, "role": "system"}
+        self.llm = OpenAIWrapper(config_list=llm_config["config_list"])
+        logger.debug(f"Summarizer created")
 
     @classmethod
     def from_config(
@@ -33,8 +37,8 @@ class Prisoner(CustomAgent):
         n_guards: int,
         n_prisoners: int,
         agent_fields: list[str],
-    ) -> "Prisoner":
-        context = {}  #  configurator.get_section("Prisoner")
+    ) -> "Summarizer":
+        context = {}  # configurator.get_section("Summarizer")
         shared_context = {}  # configurator.get_section("Shared")
         full_context = {**context, **shared_context}
         system_prompt = SystemPrompt(
@@ -46,15 +50,16 @@ class Prisoner(CustomAgent):
         return cls(llm_config=llm_config, system_message=system_prompt.content)
 
     @classmethod
-    def from_prompt(cls, llm_config, system_prompt) -> "Prisoner":
+    def from_prompt(cls, llm_config, system_prompt) -> "Summarizer":
         return cls(llm_config=llm_config, system_message=system_prompt)
 
-    def __hash__(self) -> int:
-        return super().__hash__()
+    def generate_summary(self, previous_conversation, round_number: int) -> str:
+        summary = self.llm.create(
+            messages=[self.system_message_oai] + previous_conversation
+        )
+        summary_text = summary.choices[0].message.content
+        return f"Day {round_number} summary:\n {summary_text}"
 
     @classmethod
     def _get_name(cls) -> str:
-        prefix = "Prisoner_P-"
-        random_string = cls._get_random_numeric_string()
-        name = prefix + random_string
-        return name
+        return "Summarizer"

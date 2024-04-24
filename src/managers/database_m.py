@@ -1,4 +1,3 @@
-import json
 import logging
 from dataclasses import dataclass, field
 
@@ -11,18 +10,19 @@ from pymongo.server_api import ServerApi
 from ..classes.conversation import Conversation
 from ..classes.experiment import Experiment
 from ..classes.message import Message
-
-# from .config_handler import configurator
+from ..classes_old.experiment_old import ExperimentOld
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class DBHandler:
+class DatabaseManager:
+    username: str = field(init=False)
     client: MongoClient = field(init=False)
     db: Database = field(init=False)
 
     def __init__(self, username: str, password: str, cluster_url: str) -> None:
+        self.username = username
         try:
             self.client = MongoClient(
                 f"mongodb+srv://{username}:{password}@{cluster_url}/",
@@ -47,8 +47,16 @@ class DBHandler:
         self.db = self.client[database]
         logger.debug(f"Selected database: {database}")
 
-    def get_experiments(self) -> list[dict]:
-        experiments = list(self.db.experiments.find())
+    def save_experiment(self, experiment: Experiment) -> ObjectId:
+        experiment_id = self.db.experiments.insert_one(
+            experiment.to_document()
+        ).inserted_id
+        logger.debug(f"Experiment saved with ID: {experiment_id}")
+        return experiment_id
+
+    def get_experiments(self) -> list[Experiment]:
+        docs = list(self.db.experiments.find())
+        experiments = [Experiment.from_document(doc) for doc in docs]
         logger.debug(f"Experiments retrieved: {len(experiments)}")
         return experiments
 
@@ -60,10 +68,10 @@ class DBHandler:
         logger.debug(f"Conversations retrieved: {len(conversations)}")
         return conversations
 
-    def get_experiment(self, experiment_id: str) -> Experiment:
+    def get_experiment(self, experiment_id: str) -> ExperimentOld:
         config = self.db.experiments.find_one({"_id": ObjectId(experiment_id)})
         logger.debug(f"Experiment retrieved: {experiment_id}")
-        experiment = Experiment(config=config)  # type: ignore
+        experiment = ExperimentOld(config=config)  # type: ignore
         return experiment
 
     def get_conversation(self, conversation_id: str) -> dict:
@@ -71,7 +79,7 @@ class DBHandler:
         logger.debug(f"Conversation retrieved: {conversation_id}")
         return config  # type: ignore
 
-    def update_experiment(self, experiment: Experiment) -> None:
+    def update_experiment(self, experiment: ExperimentOld) -> None:
         self.db.experiments.update_one(
             {"_id": experiment.id},
             {"$set": experiment.to_document()},
@@ -84,13 +92,6 @@ class DBHandler:
             {"$set": conversation},
         )
         logger.debug(f"Conversation updated with ID: {conversation['_id']}")
-
-    def save_experiment(self, experiment: Experiment) -> ObjectId:
-        experiment_id = self.db.experiments.insert_one(
-            experiment.to_document()
-        ).inserted_id
-        logger.debug(f"Experiment saved with ID: {experiment_id}")
-        return experiment_id
 
     def save_conversation(self, conversation: Conversation) -> ObjectId:
         for message in conversation.messages_ids:
@@ -116,7 +117,7 @@ class DBHandler:
         )
         logger.debug(f"Added conversation {conversation} to experiment {experiment_id}")
 
-    def delete_experiment(self, experiment: Experiment) -> None:
+    def delete_experiment(self, experiment: ExperimentOld) -> None:
         # Delete the conversations and messages associated with the experiment
         for conversation_id in experiment.conversations_ids:
             conversation = self.db.conversations.find_one({"_id": conversation_id})
