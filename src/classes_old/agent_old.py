@@ -1,4 +1,3 @@
-import logging
 import random
 import string
 from abc import abstractmethod
@@ -7,12 +6,13 @@ from typing import Any, Dict, List, Optional, Union
 
 from autogen import ConversableAgent
 from autogen.agentchat.agent import Agent
+from itakello_logging import ItakelloLogging
 
 from ..serializers.document_serializer import DocumentSerializer
 
 # from autogen.agentchat.agent import Agent
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass

@@ -1,11 +1,11 @@
-import logging
 from dataclasses import dataclass
 
 import autogen
+from itakello_logging import ItakelloLogging
 
 from .chat import Chat
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass

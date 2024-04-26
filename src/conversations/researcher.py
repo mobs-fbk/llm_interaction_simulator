@@ -1,9 +1,9 @@
-import logging
 from dataclasses import dataclass
 
 from autogen import UserProxyAgent
+from itakello_logging import ItakelloLogging
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass

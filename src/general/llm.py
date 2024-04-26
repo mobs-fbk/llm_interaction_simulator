@@ -1,24 +1,26 @@
-import logging
 from dataclasses import dataclass, field
+
+from itakello_logging import ItakelloLogging
 
 from ..serializers.document_serializer import DocumentSerializer
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
 class LLM(DocumentSerializer):
-    name: str
+    model: str
 
     def __post_init__(self) -> None:
-        logger.debug(f"Created new llm: {self.name}")
+        self.model = self.model.lower()
+        logger.debug(f"Created a new llm: {self.model}")
 
     def to_document(self) -> str:
-        return self.name
+        return self.model
 
     @classmethod
     def from_document(cls, doc: str) -> "LLM":
-        return cls(name=doc)
+        return cls(model=doc)
 
     def __str__(self) -> str:
-        return self.name
+        return self.model

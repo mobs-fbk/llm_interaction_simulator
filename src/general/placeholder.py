@@ -1,8 +1,8 @@
-import logging
 from dataclasses import dataclass, field
 
 import inflect
 import nltk
+from itakello_logging import ItakelloLogging
 from nltk import pos_tag
 
 from ..serializers.document_serializer import DocumentSerializer
@@ -10,20 +10,20 @@ from ..utility.enums import PlaceholderType
 
 nltk.download("averaged_perceptron_tagger", quiet=True)
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
 class Placeholder(DocumentSerializer):
     tag: str
-    verb: str = field(init=False)
     role: str = field(init=False)
     type: PlaceholderType = field(init=False)
+    verb: str = field(init=False)
     p: inflect.engine = field(default=inflect.engine(), init=False)
 
     def __post_init__(self) -> None:
         tag_parts = self.tag[1:-1].split("_")
-        self.role = tag_parts[0]
+        self.role = tag_parts[0].lower()
         self.type = PlaceholderType[tag_parts[1]]
         if self.type == PlaceholderType.VERB:
             if len(tag_parts) != 3:

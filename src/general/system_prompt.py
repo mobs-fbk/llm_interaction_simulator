@@ -1,9 +1,10 @@
-import logging
 from dataclasses import dataclass, field
+
+from itakello_logging import ItakelloLogging
 
 # from ..handlers.config_handler import configurator
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
@@ -39,7 +40,8 @@ class SystemPrompt:
         try:
             template = template.format(**context)
         except KeyError as e:
-            logging.error(f"KeyError: {e} in context")
+            pass
+            # logging.error(f"KeyError: {e} in context")
         return template
 
     def _fill_plurals(self, temp_content: str, n_guards: int, n_prisoners: int) -> str:

@@ -1,9 +1,11 @@
-import logging
 from dataclasses import dataclass
 
-from ..serializers.document_serializer import DocumentSerializer
+from itakello_logging import ItakelloLogging
 
-logger = logging.getLogger(__name__)
+from ..serializers.document_serializer import DocumentSerializer
+from ..utility.enums import SectionType
+
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
@@ -11,6 +13,8 @@ class Section(DocumentSerializer):
     index: int
     title: str
     content: str
+    type: SectionType
+    role: str = ""
 
     def __post_init__(self) -> None:
         self.title = self.title.replace("_", " ").capitalize()
@@ -19,7 +23,14 @@ class Section(DocumentSerializer):
 
     @classmethod
     def from_document(cls, doc: dict) -> "Section":
-        return cls(index=doc["index"], title=doc["title"], content=doc["content"])
+        role = doc.get("role", "")
+        return cls(
+            index=doc["index"],
+            title=doc["title"],
+            content=doc["content"],
+            type=SectionType(doc["type"]),
+            role=role,
+        )
 
     def set_content(self, content: str) -> set[str]:
         placeholders_tags = set(
@@ -33,11 +44,15 @@ class Section(DocumentSerializer):
         return placeholders_tags
 
     def to_document(self) -> dict:
-        return {
+        doc = {
             "index": self.index,
             "title": self.title,
             "content": self.content,
+            "type": self.type.value,
         }
+        if self.role:
+            doc["role"] = self.role
+        return doc
 
     def __str__(self) -> str:
         output = f"{self.content}"
@@ -47,7 +62,13 @@ class Section(DocumentSerializer):
         return output
 
     def __lt__(self, other: "Section") -> bool:
-        return self.index < other.index
+        if self.index == 0 or other.index == 0:
+            return self.index < other.index
+        if self.type == other.type:
+            if self.index == other.index:
+                return self.role < other.role
+            return self.index < other.index
+        return self.type < other.type
 
-    def __gt__(self, other: "Section") -> bool:
-        return self.index > other.index
+    def __eq__(self, other: "Section") -> bool:  # type: ignore
+        return self.title == other.title

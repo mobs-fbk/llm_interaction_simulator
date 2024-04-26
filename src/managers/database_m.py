@@ -1,96 +1,118 @@
-import logging
 from dataclasses import dataclass, field
 
 from bson.objectid import ObjectId
+from itakello_logging import ItakelloLogging
 from pymongo.database import Database
 from pymongo.errors import ConfigurationError, OperationFailure
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-from ..classes.conversation import Conversation
-from ..classes.experiment import Experiment
-from ..classes.message import Message
-from ..classes_old.experiment_old import ExperimentOld
+from ..conversations.conversation import Conversation
+from ..experiments.experiment import Experiment
+from ..messages.message import Message
+from ..utility.consts import DEFAULT_DATABASE
+from .input_m import InputManager
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging().get_logger(__name__)
 
 
 @dataclass
 class DatabaseManager:
+    input_m: InputManager = field(default_factory=InputManager)
     username: str = field(init=False)
     client: MongoClient = field(init=False)
     db: Database = field(init=False)
 
-    def __init__(self, username: str, password: str, cluster_url: str) -> None:
-        self.username = username
+    def __post_init__(self) -> None:
+        self.username = "admin"  # self.input_m.input_textual("Enter your username: ")
+        password = "Z5nzLsiUMPLfBnJ0"  # self.input_m.password("Enter your password: ")
+        cluster_url = "cluster0.hrahamh.mongodb.net"  # self.input_m.input_textual("Enter your MongoDB cluster URL: ")
+        self.client = MongoClient(
+            f"mongodb+srv://{self.username}:{password}@{cluster_url}/",
+            server_api=ServerApi("1"),
+        )
+        logger.debug(f"MongoDB client created with address [{self.client.address}].")
+
+    def authenticate_user(self) -> bool:
         try:
-            self.client = MongoClient(
-                f"mongodb+srv://{username}:{password}@{cluster_url}/",
-                server_api=ServerApi("1"),
-            )
-            # Force a call to the server to establish a connection
             self.client.admin.command("ping")
             logger.debug("MongoDB connection established.")
-        except ConfigurationError as e:
-            raise ValueError("Invalid cluster URL") from e
-        except OperationFailure as e:
-            raise PermissionError("Authentication failed") from e
+            return True
+        except ConfigurationError:
+            logger.error("Invalid cluster URL")
+            return False
+        except OperationFailure:
+            logger.error("Authentication failed")
+            return False
 
-    def list_databases(self) -> list[str]:
+    def select_database(self) -> None:
+        databases = self._list_databases()
+        if not databases:
+            selected_db = DEFAULT_DATABASE
+            logger.warning(
+                f"No databases found. Creating a new one named {selected_db}."
+            )
+        else:
+            selected_db = self.input_m.select_one("Select a database", databases)
+        self.db = self.client[selected_db]
+        logger.debug(f"Selected database: {selected_db}")
+
+    def _list_databases(self) -> list[str]:
         databases = self.client.list_database_names()
         databases.remove("admin")
         databases.remove("local")
-        logger.debug(f"Available databases: {databases}")
         return databases
-
-    def select_database(self, database: str) -> None:
-        self.db = self.client[database]
-        logger.debug(f"Selected database: {database}")
 
     def save_experiment(self, experiment: Experiment) -> None:
         self.db.experiments.insert_one(experiment.to_document())
         logger.debug(f"Experiment saved with ID: {experiment.id}")
 
     def get_experiments(self) -> dict[str, Experiment]:
-        docs = list(self.db.experiments.find())
-        experiments = {str(doc["_id"]): Experiment.from_document(doc) for doc in docs}
+        experiment_docs = list(self.db.experiments.find())
+        experiments = {
+            str(doc["_id"]): Experiment.from_document(doc) for doc in experiment_docs
+        }
         logger.debug(f"Experiments retrieved: {len(experiments)}")
         return experiments
 
-    def get_conversations(self, conversation_ids: list[ObjectId]) -> list[dict]:
+    def get_conversations(
+        self, conversation_ids: list[ObjectId]
+    ) -> dict[str, Conversation]:
         # Retrieve the conversations from the database
-        conversations = list(
+        conversation_docs = list(
             self.db.conversations.find({"_id": {"$in": conversation_ids}})
         )
-        logger.debug(f"Conversations retrieved: {len(conversations)}")
+        conversations = {
+            str(doc["_id"]): Conversation.from_document(doc)
+            for doc in conversation_docs
+        }
+        logger.debug(f"Conversations retrieved: {len(conversation_docs)}")
         return conversations
 
-    def get_experiment(self, experiment_id: str) -> ExperimentOld:
-        config = self.db.experiments.find_one({"_id": ObjectId(experiment_id)})
-        logger.debug(f"Experiment retrieved: {experiment_id}")
-        experiment = ExperimentOld(config=config)  # type: ignore
-        return experiment
+    def get_messages(self, message_ids: list[ObjectId]) -> dict[str, Message]:
+        # Retrieve the messages from the database
+        message_docs = list(self.db.messages.find({"_id": {"$in": message_ids}}))
+        messages = {str(doc["_id"]): Message.from_document(doc) for doc in message_docs}
+        logger.debug(f"Messages retrieved: {len(message_docs)}")
+        return messages
 
-    def get_conversation(self, conversation_id: str) -> dict:
-        config = self.db.conversations.find_one({"_id": ObjectId(conversation_id)})
-        logger.debug(f"Conversation retrieved: {conversation_id}")
-        return config  # type: ignore
-
-    def update_experiment(self, experiment: ExperimentOld) -> None:
+    def update_experiment(self, experiment: Experiment) -> None:
         self.db.experiments.update_one(
             {"_id": experiment.id},
             {"$set": experiment.to_document()},
         )
         logger.debug(f"Experiment updated with ID: {experiment.id}")
 
-    def update_conversation(self, conversation: dict) -> None:
+    def update_conversation(self, conversation: Conversation) -> None:
         self.db.conversations.update_one(
-            {"_id": conversation["_id"]},
-            {"$set": conversation},
+            {"_id": conversation.id},
+            {"$set": conversation.to_document()},
         )
-        logger.debug(f"Conversation updated with ID: {conversation['_id']}")
+        logger.debug(f"Conversation updated with ID: {conversation.id}")
 
-    def save_conversation(self, conversation: Conversation) -> ObjectId:
+    def save_conversation(
+        self, experiment: Experiment, conversation: Conversation
+    ) -> ObjectId:
         for message in conversation.messages_ids:
             if isinstance(message, Message):
                 message.id = self._save_message(message)
@@ -114,9 +136,9 @@ class DatabaseManager:
         )
         logger.debug(f"Added conversation {conversation} to experiment {experiment_id}")
 
-    def delete_experiment(self, experiment: ExperimentOld) -> None:
+    def delete_experiment(self, experiment: Experiment) -> None:
         # Delete the conversations and messages associated with the experiment
-        for conversation_id in experiment.conversations_ids:
+        for conversation_id in experiment.conversation_ids:
             conversation = self.db.conversations.find_one({"_id": conversation_id})
             for message in conversation["messages"]:  # type: ignore
                 self.db.messages.delete_one({"_id": message})
@@ -130,8 +152,3 @@ class DatabaseManager:
             self.db.messages.delete_one({"_id": message})
         self.db.conversations.delete_one({"_id": conversation["_id"]})
         logger.debug(f"Deleted conversation with ID: {conversation['_id']}")
-
-    def get_messages(self, message_ids: list[ObjectId]) -> list[dict]:
-        messages = list(self.db.messages.find({"_id": {"$in": message_ids}}))
-        logger.debug(f"Messages retrieved: {len(messages)}")
-        return messages

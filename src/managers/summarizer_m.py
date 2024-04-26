@@ -1,9 +1,10 @@
-import logging
 from dataclasses import dataclass, field
+
+from itakello_logging import ItakelloLogging
 
 from ..classes.section import Section
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass

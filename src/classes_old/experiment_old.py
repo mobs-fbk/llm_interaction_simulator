@@ -1,18 +1,18 @@
 import json
-import logging
 from dataclasses import dataclass, field
 from typing import cast
 
 import autogen
 from bson.objectid import ObjectId
+from itakello_logging import ItakelloLogging
 
-from ..classes.chat import Chat
+from ..conversation.chat import Chat
 from ..classes.conversation import Conversation
 
 # from . import CustomAgentOld, Guard, Manager, Prisoner, Researcher, Summarizer
 from ..serializers.document_serializer import DocumentSerializer
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
@@ -20,7 +20,6 @@ class ExperimentOld(DocumentSerializer):
     config: dict
     id: ObjectId = field(init=False)
     conversations_ids: list[ObjectId] = field(default_factory=list)
-    # researcher: Researcher = field(init=False)
     # agents: list[CustomAgentOld] = field(init=False)
     group_chat: Chat = field(init=False)
     # manager: Manager = field(init=False)

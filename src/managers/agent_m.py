@@ -1,17 +1,20 @@
-import logging
 from dataclasses import dataclass, field
 
-from ..classes.placeholder import Placeholder
-from ..classes.role import Role
-from ..classes.section import Section
-from ..serializers.document_serializer import DocumentSerializer
-from ..utility.enums import PlaceholderType
+from itakello_logging import ItakelloLogging
 
-logger = logging.getLogger(__name__)
+from ..experiments.role import Role
+from ..experiments.section import Section
+from ..general.placeholder import Placeholder
+from ..serializers.document_serializer import DocumentSerializer
+from ..utility.enums import SectionType
+from .input_m import InputManager
+
+logger = ItakelloLogging().get_logger(__name__)
 
 
 @dataclass
 class AgentManager(DocumentSerializer):
+    input_m: InputManager = field(init=False)
     roles: dict[str, Role] = field(default_factory=dict)
     shared_sections: dict[str, Section] = field(default_factory=dict)
     summarizer_sections: dict[str, Section] = field(default_factory=dict)
@@ -24,6 +27,7 @@ class AgentManager(DocumentSerializer):
         summarizer_sections: list[Section],
         placeholders: list[Placeholder] = [],
     ) -> None:
+        self.input_m = InputManager()
         self.roles = {role.name: role for role in roles}
         self.shared_sections = {section.title: section for section in shared_sections}
         self.summarizer_sections = {
@@ -34,6 +38,7 @@ class AgentManager(DocumentSerializer):
         self.placeholders = {
             placeholder.tag: placeholder for placeholder in placeholders
         }
+        self.ask_contents_empty_sections()
         logger.debug(
             f"Added:\n"
             + f"- {len(roles)} roles\n"
@@ -90,16 +95,65 @@ class AgentManager(DocumentSerializer):
             ],
         }
 
-    def print_placeholders(self) -> None:
+    def ask_contents_empty_sections(self) -> None:
+        private_sections = [
+            section
+            for role in self.roles.values()
+            for section in role.sections.values()
+            if not section.content
+        ]
+        shared_sections = [
+            section for section in self.shared_sections.values() if not section.content
+        ]
+        summarizer_sections = [
+            section
+            for section in self.summarizer_sections.values()
+            if not section.content
+        ]
+        empty_sections = private_sections + shared_sections + summarizer_sections
+
+        if not empty_sections:
+            return
+
+        logger.instruction(
+            "\n\033[1mInstructions\033[0m\033[36m:\n"
+            + "1. \033[1mPlaceholders\033[0m\033[36m: A list of available placeholders will be displayed. These placeholders allow you to specify elements within the text that change depending on context, such as singular or plural forms based on the number of agents.\n"
+            + "2. \033[1mUsing Placeholders in Content\033[0m\033[36m: When composing content for each section, incorporate any of the displayed placeholders directly into your text. Placeholders such as <AGENT_NUM> will automatically be replaced with the actual number of agents with that role in the conversation (e.g., '1', '2', '3'...).\nSimilarly, <AGENT_NOUN> will adapt to reflect the singular or plural noun appropriate to the context, such as 'guard' for one and 'guards' for more than one.\nEXAMPLE: 'There are <GUARD_NUM> <GUARD_NOUN> in the room,' in the case of 3 guards form will become 'There are 3 guards in the room'.\n"
+            + "3. \033[1mCreating and Using New Verb Placeholders\033[0m\033[36m: You can create new placeholders specifically for verbs by using the format <AGENT_VERB>. Ensure:\n\ti. to use the base form of the verb when creating these placeholders (e.g. <AGENT_MAKE>, <AGENT_GO>, or <AGENT_EAT>).\n\tii. to insert the agent role subject to the verb (e.g. <GUARD_MAKE>).\nOnce established, these verb placeholders can be incorporated into the content of any section, adapting to the context as needed.\nEXAMPLE: 'The <GUARD_NOUN> <GUARD_MAKE> a decision,' in the singular form wll become 'The guard makes a decision'.\n"
+        )
+        self._print_all_placeholders()
+
+        for section in sorted(empty_sections):
+            self.ask_section_content(section)
+
+    def ask_section_content(self, section: Section) -> None:
+        invalid_placeholders = True
+        while invalid_placeholders:
+            message = f"Enter the content for the {section.type.value} {section.title} section"
+            if section.type == SectionType.PRIVATE:
+                assert section.role, logger.error("Private section without role")
+                message += f" of {section.role.capitalize()} agents"
+            content = self.input_m.input_str(message)
+            new_placeholders = section.set_content(content)
+            invalid_placeholders = self.add_missing_placeholders(new_placeholders)
+            if invalid_placeholders:
+                logger.warning(
+                    "You can only:\n"
+                    + "1. use existing placeholders\n"
+                    + "2. create new verb placeholders in the form <ROLE_VERB_VERB> with the verb in its base form (e.g. <GUARD_VERB_MAKE>)\n"
+                    + "Please try again."
+                )
+
+    def _print_placeholders(self) -> None:
         placeholders = "\n".join(
             [str(placeholder) for placeholder in self.placeholders.values()]
         )
         logger.info(f"Available general placeholders:\n{placeholders}\n")
 
-    def print_all_placeholders(self) -> None:
+    def _print_all_placeholders(self) -> None:
         for role in self.roles.values():
             role.print_placeholders()
-        self.print_placeholders()
+        self._print_placeholders()
 
     def add_missing_placeholders(self, tags: set[str]) -> bool:
         curr_tags = set()
@@ -114,7 +168,7 @@ class AgentManager(DocumentSerializer):
                 if (
                     len(parts) != 3
                     or parts[0] not in self.roles.keys()
-                    or parts[1] != PlaceholderType.VERB.value.lower()
+                    or parts[1] != "VERB"
                     or not Placeholder.is_verb(parts[2])
                 ):
                     logger.error(f"Invalid placeholder tag: {tag}")

@@ -1,10 +1,11 @@
-import logging
 from dataclasses import dataclass, field
 
-from ..classes.llm import LLM
+from itakello_logging import ItakelloLogging
+
+from ..general.llm import LLM
 from ..serializers.document_serializer import DocumentSerializer
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
@@ -12,7 +13,7 @@ class LLMManager(DocumentSerializer):
     llms: dict[str, LLM] = field(default_factory=dict)
 
     def __init__(self, llms: list[LLM]) -> None:
-        self.llms = {llm.name: llm for llm in llms}
+        self.llms = {llm.model: llm for llm in llms}
         logger.debug(f"Added {len(llms)} new llms")
 
     def to_document(self) -> list:
@@ -23,5 +24,4 @@ class LLMManager(DocumentSerializer):
         return cls([LLM.from_document(llm) for llm in doc])
 
     def __str__(self) -> str:
-        llms = "\n".join(["- " + str(llm) for llm in self.llms.values()])
-        return "\033[1mLLMs\033[0m:\n" + llms
+        return "\n".join(["- " + str(llm) for llm in self.llms.values()])

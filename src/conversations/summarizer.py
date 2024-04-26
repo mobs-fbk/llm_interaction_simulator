@@ -1,15 +1,14 @@
-import logging
 from dataclasses import dataclass
 from typing import Any
 
 from autogen import OpenAIWrapper
-
-from .system_prompt import SystemPrompt
+from itakello_logging import ItakelloLogging
 
 # from ..handlers.config_handler import configurator
 from ..classes_old.agent_old import CustomAgentOld
+from ..general.system_prompt import SystemPrompt
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass

@@ -1,66 +1,73 @@
-import logging
-
 from itakello_logging import ItakelloLogging
 
-from src.managers.ui_m import UIManager
+from src.managers.action_m import ActionManager
+from src.managers.conversation_m import ConversationManager
+from src.managers.database_m import DatabaseManager
+from src.managers.experiment_m import ExperimentManager
+from src.managers.input_m import InputManager
 
-logger = logging.getLogger(__name__)
+ItakelloLogging(
+    debug=True,
+    excluded_modules=[
+        "docker.utils.config",
+        "docker.auth",
+        "httpx",
+        "httpcore.connection",
+        "httpcore.http11",
+        "autogen.io.base",
+        "asyncio",
+        "openai._base_client",  # Remove to see API requests debug logs
+    ],
+)
 
 
 def main() -> None:
-    ItakelloLogging(
-        debug=True,
-        excluded_modules=[
-            "docker.utils.config",
-            "docker.auth",
-            "httpx",
-            "httpcore.connection",
-            "httpcore.http11",
-            "autogen.io.base",
-            "asyncio",
-            "openai._base_client",  # Remove to see API requests debug logs
-        ],
-    )
-    ui_m = UIManager()
-    db_m = ui_m.authenticate_user()
-    selected_db = ui_m.select_database(db_m.list_databases())
-    db_m.select_database(selected_db)
+    logger = ItakelloLogging.get_logger(__name__)
 
     while True:
-        action = ui_m.select_initial_action()
-        if action == "Create a new experiment":  # ✅
-            experiment = ui_m.create_experiment(creator=db_m.username)
-            db_m.save_experiment(experiment)
-        elif action == "Select an experiment":  # ✅
-            available_experiments = db_m.get_experiments()
-            if not available_experiments:
+        db_m = DatabaseManager()  # ⚒️
+        if db_m.authenticate_user():
+            break
+    db_m.select_database()
+
+    input_m = InputManager()
+    action_m = ActionManager()
+    experiment_m = ExperimentManager(db_m=db_m)  # ⚒️
+    conversation_m = ConversationManager(db_m=db_m)  # ❌
+
+    while True:
+        action = action_m.select_initial_action()
+        if action == "Create new experiment":  # ✅
+            experiment = experiment_m.create_experiment(creator=db_m.username)
+        elif action == "Select experiment":  # ✅
+            experiment = experiment_m.select_experiment()
+            if experiment == None:
                 logger.warning("No experiments available. Please create a new one.")
                 continue
-            experiment = ui_m.select_experiment(experiments=available_experiments)
-            pass
         else:
             break  # Exit the application
         logger.info(f"\nSelected experiment:\n\n{experiment}")
         while True:
-            action = ui_m.select_experiment_action()
-            if action == "Perform new conversations":  # ❌
-                # new_conversations = ui_m.perform_conversations(experiment)
-                # experiment.conversations_ids.extend(new_conversations)
-                pass
-            elif action == "Select old conversations":  # ❌
-                # conversation_dict = ui_m.select_conversation(experiment)
-                # if conversation_dict == None:
-                pass
-            elif action == "Update experiment":  # ❌
-                # ui_m.update_experiment(experiment)
-                pass
-            elif action == "Delete experiment":  # ❌
-                # ui_m.delete_experiment(experiment)
+            action = action_m.select_experiment_action()
+            if action == "Perform new conversations":  # ⚒️
+                experiment_m.perform_conversations(experiment)
+                continue
+            elif action == "Duplicate and update experiment":  # ✅
+                experiment = experiment_m.update_experiment(experiment)
+                if experiment != None:
+                    logger.info(f"\nUpdated experiment:\n\n{experiment}")
                 break
+            elif action == "Select old conversations":  # ✅
+                conversation = conversation_m.select_conversation(experiment)
+            elif action == "Delete experiment":  # ✅
+                if input_m.confirm("Are you sure you want to delete this experiment?"):
+                    experiment_m.delete_experiment(experiment)
+                    break
+                continue
             else:  # Go back
                 break
             while True:
-                action = ui_m.select_conversation_action()
+                action = action_m.select_conversation_action()
                 if action == "View conversation":  # ❌
                     # ui_m.view_conversation(conversation_dict)
                     pass

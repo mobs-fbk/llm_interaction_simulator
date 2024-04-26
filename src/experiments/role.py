@@ -1,29 +1,27 @@
-import logging
 from dataclasses import dataclass, field
+
+from itakello_logging import ItakelloLogging
 
 from ..serializers.document_serializer import DocumentSerializer
 from .placeholder import Placeholder
 from .section import Section
 
-logger = logging.getLogger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
 class Role(DocumentSerializer):
     name: str
-    numerical_name: bool
     sections: dict[str, Section] = field(default_factory=dict)
     placeholders: dict[str, Placeholder] = field(default_factory=dict)
 
     def __init__(
         self,
         name: str,
-        numerical_name: bool,
         sections: list[Section],
         placeholders: list[Placeholder] = [],
     ) -> None:
         self.name = name
-        self.numerical_name = numerical_name
         self.sections = {section.title: section for section in sections}
         if not placeholders:
             placeholders = self._create_starting_placeholders()
@@ -44,7 +42,6 @@ class Role(DocumentSerializer):
         return (
             "----------------------------------------\n"
             + f"\033[1mName\033[0m: {self.name}\n"
-            + f"\033[1mNumerical name\033[0m: {self.numerical_name}\n"
             + f"\033[1mPrivate sections\033[0m:\n{sections}\n"
             + f"\033[1mPlaceholders\033[0m:\n{placeholders}\n"
             + "----------------------------------------"
@@ -54,7 +51,6 @@ class Role(DocumentSerializer):
     def from_document(cls, doc: dict) -> "Role":
         return cls(
             name=doc["name"],
-            numerical_name=doc["numerical_name"],
             sections=[Section.from_document(section) for section in doc["sections"]],
             placeholders=[
                 Placeholder.from_document(placeholder)
@@ -65,7 +61,6 @@ class Role(DocumentSerializer):
     def to_document(self) -> dict:
         return {
             "name": self.name,
-            "numerical_name": self.numerical_name,
             "sections": [section.to_document() for section in self.sections.values()],
             "placeholders": [
                 placeholder.to_document() for placeholder in self.placeholders.values()
