@@ -21,11 +21,11 @@ class InputManager:
 
     def input_int(
         self,
-        message: str,
+        question: str,
         positive_requirement: bool = False,
     ) -> int:
         while True:
-            user_input = inquirer.text(message, render=self.render)
+            user_input = inquirer.text(question, render=self.render)
             try:
                 user_input = int(user_input)
             except ValueError:
@@ -36,15 +36,35 @@ class InputManager:
                 continue
             return user_input
 
+    def input_float(
+        self, message: str, positive_requirement: bool = False, max_value: float = 0
+    ) -> float:
+        while True:
+            user_input = inquirer.text(message, render=self.render)
+            try:
+                user_input = float(user_input)
+            except ValueError:
+                logger.error("Invalid input. Please enter a float number.")
+                continue
+            if positive_requirement and user_input < 0:
+                logger.error("Invalid input. Please enter a positive number.")
+                continue
+            if max_value and user_input > max_value:
+                logger.error(
+                    f"Invalid input. Please enter a number not greater than {max_value}."
+                )
+                continue
+            return user_input
+
     def input_str(
         self,
         message: str,
         optional: bool = False,
         example: str = "",
     ) -> str:
-        if example:
-            message += f" (e.g. {example})"
         while True:
+            if example:
+                message += f" (e.g. {example})"
             user_input = inquirer.text(message, render=self.render)
             if not optional and not user_input:
                 logger.error("Invalid input. Please enter a value.")
@@ -52,14 +72,19 @@ class InputManager:
             return user_input
 
     def input_list(
-        self, message: str, optional: bool = False, example: str = ""
+        self,
+        message: str,
+        optional: bool = False,
+        example: str = "",
+        avoid_duplicates: bool = True,
     ) -> list[str]:
+        message += " [comma-separated list]"
         if example:
             message += f" (e.g. {example})"
         while True:
             user_input = inquirer.text(message, render=self.render)
             items = [item.strip() for item in user_input.split(",")]
-            if len(set(items)) != len(items):
+            if avoid_duplicates and len(set(items)) != len(items):
                 logger.error("Invalid input. Please ensure all items are different.")
                 continue
             if "" in items:

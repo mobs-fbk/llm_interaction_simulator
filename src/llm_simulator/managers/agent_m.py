@@ -59,7 +59,7 @@ class AgentManager(DocumentSerializer):
             [str(placeholder) for placeholder in self.placeholders.values()]
         )
         return (
-            f"\033[1mRoles\033[0m:\n{roles}\n\n"
+            f"{roles}\n\n"
             + f"\033[1mShared sections\033[0m:\n{shared_sections}\n\n"
             + f"\033[1mSummarizer sections\033[0m:\n{summarizer_sections}\n\n"
             + f"\033[1mGlobal placeholders\033[0m:\n{placeholders}"
@@ -116,8 +116,7 @@ class AgentManager(DocumentSerializer):
             return
 
         logger.instruction(
-            "\n\033[1mInstructions\033[0m\033[36m:\n"
-            + "1. \033[1mPlaceholders\033[0m\033[36m: A list of available placeholders will be displayed. These placeholders allow you to specify elements within the text that change depending on context, such as singular or plural forms based on the number of agents.\n"
+            "1. \033[1mPlaceholders\033[0m\033[36m: A list of available placeholders will be displayed. These placeholders allow you to specify elements within the text that change depending on context, such as singular or plural forms based on the number of agents.\n"
             + "2. \033[1mUsing Placeholders in Content\033[0m\033[36m: When composing content for each section, incorporate any of the displayed placeholders directly into your text. Placeholders such as <AGENT_NUM> will automatically be replaced with the actual number of agents with that role in the conversation (e.g., '1', '2', '3'...).\nSimilarly, <AGENT_NOUN> will adapt to reflect the singular or plural noun appropriate to the context, such as 'guard' for one and 'guards' for more than one.\nEXAMPLE: 'There are <GUARD_NUM> <GUARD_NOUN> in the room,' in the case of 3 guards form will become 'There are 3 guards in the room'.\n"
             + "3. \033[1mCreating and Using New Verb Placeholders\033[0m\033[36m: You can create new placeholders specifically for verbs by using the format <AGENT_VERB>. Ensure:\n\ti. to use the base form of the verb when creating these placeholders (e.g. <AGENT_MAKE>, <AGENT_GO>, or <AGENT_EAT>).\n\tii. to insert the agent role subject to the verb (e.g. <GUARD_MAKE>).\nOnce established, these verb placeholders can be incorporated into the content of any section, adapting to the context as needed.\nEXAMPLE: 'The <GUARD_NOUN> <GUARD_MAKE> a decision,' in the singular form wll become 'The guard makes a decision'.\n"
         )

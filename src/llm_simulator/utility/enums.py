@@ -16,13 +16,13 @@ class SectionType(Enum):
     SHARED = "Shared"
     SUMMARIZER = "Summarizer"
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         if self.__class__ is other.__class__:
             members = list(self.__class__)
             return members.index(self) < members.index(other)
         return NotImplemented
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
         if self.__class__ is other.__class__:
             members = list(self.__class__)
             return members.index(self) > members.index(other)

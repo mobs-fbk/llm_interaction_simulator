@@ -1,12 +1,13 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Literal, Union
 
-from bson.objectid import ObjectId
+import httpx
+import ollama
 from itakello_logging import ItakelloLogging
 
 from ..conversations.agent import Agent
 from ..conversations.conversation import Conversation
-from ..conversations.researcher import Researcher
 from ..experiments.experiment import Experiment
 from ..experiments.role import Role
 from ..experiments.section import Section
@@ -69,7 +70,9 @@ class ExperimentManager:
     def delete_experiment(self, experiment: Experiment) -> None:
         self.db_m.delete_experiment(experiment)
 
-    def update_experiment(self, experiment: Experiment) -> Union[Experiment, None]:
+    def duplicate_and_update_experiment(
+        self, experiment: Experiment
+    ) -> Union[Experiment, None]:
         changes = self.input_m.select_multiple(
             message="Select the changes you want to make",
             choices=[
@@ -86,22 +89,12 @@ class ExperimentManager:
         if not changes:
             return None
 
-        logger.instruction(
-            "\n\033[1mInstructions\033[0m\033[36m:\n"
-            + "1. Leave empty to keep the current value.\n"
-            + "2. In the cases where multiple values are requested (llms, roles and section titles):\n"
-            + "- the new objects will be appended to the existing one\n"
-            + "- the old values that are not inserted againg will be deleted.\n"
-        )
-
         if "Starting message" in changes:
             logger.info("Previous starting message: " + experiment.starting_message)
-            starting_message = self._ask_for_starting_message(optional=True)
-            if starting_message:
-                experiment.starting_message = starting_message
+            experiment.starting_message = self._ask_for_starting_message()
         if "LLMs" in changes:
             logger.info("Previous LLMs:\n" + str(experiment.llm_m))
-            llms = self._ask_for_llms(optional=True)
+            llms = self._ask_for_llms()
             experiment.llm_m = LLMManager(llms=llms)
         if "Numerical names" in changes:
             logger.info(
@@ -122,6 +115,8 @@ class ExperimentManager:
 
         self.db_m.save_experiment(experiment)
 
+        logger.confirmation("Experiment duplicated and updated successfully.")
+
         return experiment
 
     def select_experiment(self) -> Union[Experiment, None]:
@@ -141,51 +136,6 @@ class ExperimentManager:
         )
         return experiments[selected_id]
 
-    def perform_conversations(self, experiment: Experiment) -> list[ObjectId]:
-        n_conversations = self.input_m.input_int(
-            "Write how many conversations you want to perform",
-            positive_requirement=True,
-        )
-        llms = self.input_m.select_multiple(
-            message="Select the LLMs to use",
-            choices=[llm for llm in experiment.llm_m.llms.keys()],
-        )
-        conversation_days = self.input_m.input_int(
-            "Enter the number of days per conversation", positive_requirement=True
-        )
-        conversation_rounds = self.input_m.input_int(
-            "Enter the number of rounds per conversation", positive_requirement=True
-        )
-        speaker_selection_method = self._ask_for_speaker_selection_method()
-
-        agents = []
-        for role in experiment.agent_m.roles.values():
-            role_num = self.input_m.input_int(
-                f"Enter the number of {role.name} agents", positive_requirement=True
-            )
-            agents.extend([Agent(role=role.name, index=i) for i in range(role_num)])
-
-        conversations = []
-        for llm in llms:
-            for index in range(n_conversations):
-                logger.warning(
-                    f"Performing conversation [{index + 1}/{n_conversations}]"
-                )
-                conversation = Conversation(
-                    conversation_days=conversation_days,
-                    conversation_rounds=conversation_rounds,
-                    speaker_selection_method=speaker_selection_method,
-                    starting_message=experiment.starting_message,
-                    creator=self.db_m.username,
-                    llm=llm,
-                )
-                conversation = experiment.perform(conversation)
-                self.db_m.save_conversation(
-                    experiment=experiment, conversation=conversation
-                )
-        logger.info(f"Performed and saved {n_conversations} conversations")
-        return conversations
-
     def _update_agents(self, experiment: Experiment) -> None:
         section_type = SectionType.AGENTS
         logger.info(f"Updating the {section_type} section")
@@ -198,9 +148,13 @@ class ExperimentManager:
                 "Agents section contents",
             ],
         )
-        old_private_sections = self._get_private_sections(experiment).copy()
+        old_private_sections = self._get_private_sections(experiment)
 
         if "Roles" in changes:
+            logger.warning(
+                "1. The new roles will be appended to the existing one\n"
+                + "2. The roles that are not reinserted will be deleted.\n"
+            )
             old_role_names = list(experiment.agent_m.roles.keys())
 
             logger.info("Previous roles: " + ", ".join(old_role_names))
@@ -215,11 +169,23 @@ class ExperimentManager:
                 if new_role.name not in old_role_names:
                     experiment.agent_m.roles[new_role.name] = new_role
 
-        old_shared_sections = list(experiment.agent_m.shared_sections.values()).copy()
+        old_shared_sections = list(experiment.agent_m.shared_sections.values())
         old_sections = sorted(old_private_sections + old_shared_sections)
 
         if "Agents section titles" in changes:
-            old_section_titles = [section.title for section in old_sections]
+            logger.warning(
+                "1. The new sections will be appended to the existing one, using the new order\n"
+                + "2. The sections that are not reinserted will be deleted.\n"
+                + "3. If a section changes from shared to private (or viceversa), you will be asked to insert the new content\n"
+            )
+            old_section_titles = [
+                (
+                    section.title
+                    if section.type == SectionType.PRIVATE
+                    else f"{section.title} (SHARED)"
+                )
+                for section in old_sections
+            ]
             logger.info(
                 f"Previous {section_type.value} sections: "
                 + ", ".join(old_section_titles[1:])
@@ -229,51 +195,27 @@ class ExperimentManager:
                 new_sections
             )
 
-            # Remove old shared sections
-            for old_shared_section in old_shared_sections:
-                if old_shared_section not in new_shared_sections:
-                    del experiment.agent_m.shared_sections[old_shared_section.title]
+            experiment.agent_m.shared_sections = {
+                section.title: section for section in new_shared_sections
+            }
+            for role in experiment.agent_m.roles.values():
+                role.sections = {
+                    section.title: section for section in new_private_sections
+                }
 
-            # Add new shared sections
-            for new_shared_section in new_shared_sections:
-                if new_shared_section not in old_shared_sections:
-                    experiment.agent_m.shared_sections[new_shared_section.title] = (
-                        new_shared_section
-                    )
-
-            # Remove old private sections
-            for old_private_section in old_private_sections:
-                if old_private_section not in new_private_sections:
-                    for role in experiment.agent_m.roles.values():
-                        del role.sections[old_private_section.title]
-
-            # Add new private sections
-            for new_private_section in new_private_sections:
-                for role in experiment.agent_m.roles.values():
-                    new_section = Section(
-                        index=new_private_section.index,
-                        title=new_private_section.title,
-                        content=new_private_section.content,
-                        type=new_private_section.type,
-                        role=role.name,
-                    )
-                    if new_private_section not in role.sections.values():
-                        role.sections[new_private_section.title] = new_section
-
-            # Update the indexes
-            for section in new_sections:
-                if section.type == SectionType.SHARED:
-                    experiment.agent_m.shared_sections[section.title].index = (
-                        section.index
+            # Add previous contents
+            for section in old_sections:
+                if section.title in experiment.agent_m.shared_sections.keys():
+                    experiment.agent_m.shared_sections[section.title].content = (
+                        section.content
                     )
                 else:
                     for role in experiment.agent_m.roles.values():
-                        role.sections[section.title].index = section.index
+                        if section.title in role.sections.keys():
+                            role.sections[section.title].content = section.content
 
         if "Agents section contents" in changes:
-            private_sections = list(
-                next(iter((experiment.agent_m.roles.values()))).sections.values()
-            )
+            private_sections = self._get_private_sections(experiment)
             shared_sections = list(experiment.agent_m.shared_sections.values())
             sections = private_sections + shared_sections
             sections_to_reset = self.input_m.select_multiple(
@@ -303,11 +245,17 @@ class ExperimentManager:
                 "Summarizer sections contents",
             ],
         )
-        old_summarizer_sections = experiment.agent_m.summarizer_sections.copy()
 
         if "Summarizer sections titles" in changes:
+            logger.instruction(
+                "1. the new sections will be appended to the existing one, using the new order\n"
+                + "2. the sections that are not reinserted will be deleted.\n"
+            )
+            old_summarizer_sections = list(
+                experiment.agent_m.summarizer_sections.values()
+            )
             old_summarizer_section_titles = [
-                section.title for section in old_summarizer_sections.values()
+                section.title for section in old_summarizer_sections
             ]
             logger.info(
                 f"Previous {SectionType.SUMMARIZER.value} sections: "
@@ -317,24 +265,16 @@ class ExperimentManager:
                 type=SectionType.SUMMARIZER
             )
 
-            # Remove old summarizer sections
-            for old_summarizer_section in old_summarizer_sections.values():
-                if old_summarizer_section not in new_summarizer_sections:
-                    del experiment.agent_m.summarizer_sections[
-                        old_summarizer_section.title
-                    ]
-            # Add new summarizer sections
-            for new_summarizer_section in new_summarizer_sections:
-                if new_summarizer_section not in old_summarizer_sections.values():
-                    experiment.agent_m.summarizer_sections[
-                        new_summarizer_section.title
-                    ] = new_summarizer_section
+            experiment.agent_m.summarizer_sections = {
+                section.title: section for section in new_summarizer_sections
+            }
 
-            # Update the indexes
-            for section in new_summarizer_sections:
-                experiment.agent_m.summarizer_sections[section.title].index = (
-                    section.index
-                )
+            # Add previous contents
+            for section in old_summarizer_sections:
+                if section.title in experiment.agent_m.summarizer_sections.keys():
+                    experiment.agent_m.summarizer_sections[section.title].content = (
+                        section.content
+                    )
 
         if "Summarizer sections contents" in changes:
             summarizer_sections = experiment.agent_m.summarizer_sections
@@ -354,7 +294,7 @@ class ExperimentManager:
 
     def _ask_for_starting_message(self, optional: bool = False) -> str:
         return self.input_m.input_str(
-            "Enter the conversation starting message (e.g. 'Start the experiment')",
+            "Enter the conversation starting message (e.g. Start the experiment)",
             optional=optional,
         )
 
@@ -369,36 +309,51 @@ class ExperimentManager:
         )
 
     def _ask_for_llms(self, optional: bool = False) -> list[LLM]:
-        llms_names = self.input_m.input_list(
-            "Enter the LLMs to use (comma-separated, e.g. mistral, llama2)",
-            optional=optional,
+        logger.instruction(
+            "1. To find the available LLMs -> https://ollama.com/library\n"
+            + "2. If you want to use the same LLM with different parameters (temperature, top_p and/or top_k) insert it multiple times\n"
         )
-        return [LLM(model=name) for name in llms_names]
+        while True:
+            llms_names = self.input_m.input_list(
+                message="Enter the LLMs to use:",
+                example="mistral, mistral, llama2",
+                optional=optional,
+                avoid_duplicates=False,
+            )
+            try:
+                llms = [LLM(model=name) for name in llms_names]
+                break
+            except httpx.ConnectError:
+                logger.warning("Ollama is not currently running. Please start it.")
+                self.input_m.input_str(
+                    "Press Enter when Ollama is running again", optional=True
+                )
+                continue
+            except ollama.ResponseError as e:
+                logger.error(e)
+        for llm in llms:
+            llm.set_parameters()
+        return llms
 
     def _ask_for_numerical_names(self) -> bool:
         return self.input_m.confirm(
-            f"Do you want to use numeric names for agents (e.g. Guard_123)? Othwerwise, random names will be used (e.g. Guard_Alice)."
+            f"Enter 'y' if you want to use numeric names for agents (e.g. Guard_123)? Othwerwise, random names will be used (e.g. Guard_Alice)."
         )
 
     def _ask_for_roles(self, private_sections: list[Section]) -> list[Role]:
         assert all(
             section.type == SectionType.PRIVATE for section in private_sections
-        ), logger.critical("Not all sections are of type PRIVATE")
+        ), logger.critical(
+            f"Not all sections are of type {SectionType.PRIVATE.value.upper()}"
+        )
         roles_names = self.input_m.input_list(
-            "Enter the agent roles (comma-separated, e.g. guard, prisoner)"
+            "Enter the agent roles", example="guard, prisoner"
         )
         roles = []
         for name in roles_names:
-            role_sections = [
-                Section(
-                    index=section.index,
-                    title=section.title,
-                    content=section.content,
-                    type=section.type,
-                    role=name,
-                )
-                for section in private_sections
-            ]
+            role_sections = deepcopy(private_sections)
+            for section in role_sections:
+                section.role = name
             new_role = Role(
                 name=name,
                 sections=role_sections,
@@ -409,8 +364,14 @@ class ExperimentManager:
     def _ask_for_sections(
         self, type: Literal[SectionType.SUMMARIZER, SectionType.AGENTS]
     ) -> list[Section]:
+        logger.instruction(
+            "1. The sections will be ordered by the order you insert them\n"
+            + "2. A 'Starting prompt' section without title will be dynamically added to the prompt\n"
+            + f"3. The inserted sections will be used only for the {type.value}\n"
+        )
         sections_titles = self.input_m.input_list(
-            f"Enter the {type.value} section titles in the order you want them to appear in the system prompt (comma-separated, 'goal, personality, communication_rules, ...')"
+            f"Enter the {type.value.upper()} section titles:",
+            example="goal, personality, communication_rules, ...",
         )
         sections_titles.insert(0, "starting_prompt")
         sections = [
@@ -422,13 +383,16 @@ class ExperimentManager:
     def _split_sections(
         self, sections: list[Section]
     ) -> tuple[list[Section], list[Section]]:
+
         assert all(
             section.type == SectionType.AGENTS for section in sections
         ), logger.critical("Not all sections are of type AGENTS")
+
         shared_section_titles = self.input_m.select_multiple(
             message="Select shared sections between the agents",
             choices=[section.title for section in sorted(sections)],
         )
+
         shared_sections = []
         private_sections = []
         for section in sections:
@@ -439,24 +403,3 @@ class ExperimentManager:
                 section.type = SectionType.PRIVATE
                 private_sections.append(section)
         return shared_sections, private_sections
-
-    def _ask_for_speaker_selection_method(self) -> str:
-        choices = [
-            (
-                "Auto: the next speaker is selected automatically by an LLM",
-                "auto",
-            ),
-            (
-                "Manual: the next speaker is selected manually by the user",
-                "manual",
-            ),
-            ("Random: the next speaker is selected randomly", "random"),
-            (
-                "Round robin: the next speaker is selected in a round-robin fashion",
-                "round_robin",
-            ),
-        ]
-        return self.input_m.select_one(
-            message="Select a speaker selection method",
-            choices=choices,
-        )

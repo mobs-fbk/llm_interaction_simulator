@@ -1,9 +1,11 @@
 **/dist/
 **/build/
 **/logs/
+**/__pycache__/
 
 OAI_CONFIG_LIST
 experiment_settings.ini
 .vscode
 .cache
-**/__pycache__/
+*.egg-info/
+

@@ -67,8 +67,8 @@ class Experiment(DocumentSerializer):
             f"\033[1mID\033[0m: {self.id}\n\n"
             + f"\033[1mNumerical names\033[0m: {self.numerical_names}\n\n"
             + f"\033[1mStarting message\033[0m: {self.starting_message}\n\n"
-            + f"\033[1mLLMs\033[0m::\n{str(self.llm_m)}\n\n"
-            + f"{str(self.agent_m)}\n\n"
+            + f"\033[1mLLMs\033[0m:\n{str(self.llm_m)}\n\n"
+            + f"\033[1mRoles\033[0m:\n{str(self.agent_m)}\n\n"
             + f"\033[1mNote\033[0m: {self.note}\n\n"
             + f"\033[1mFavourite\033[0m: {self.favourite}\n\n"
             + f"\033[1mCreator\033[0m: {self.creator}\n\n"
@@ -88,15 +88,15 @@ class Experiment(DocumentSerializer):
         )
 
     def perform(self, conversation: Conversation, agents: list[Agent]) -> Conversation:
-        agents = []
-        for role in self.agent_m.roles.values():
-            role_num = self.input_m.
+        # agents = []
+        # for role in self.agent_m.roles.values():
+        #    #role_num = self.input_m.
 
-        researcher = Researcher()
-        chat = Chat(
-            agents=agents,
-            selection_method=conversation.speaker_selection_method,
-            round_number=conversation.conversation_rounds,
-        )
-        manager = Manager(groupchat=chat, llm_config=llm_config)
-        return conversation
+        # researcher = Researcher()
+        # chat = Chat(
+        #    agents=agents,
+        #    selection_method=conversation.speaker_selection_method,
+        #    round_number=conversation.conversation_rounds,
+        # )
+        # manager = Manager(groupchat=chat, llm_config=llm_config)
+        return Conversation()

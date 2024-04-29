@@ -3,11 +3,13 @@ from datetime import datetime
 
 from bson.objectid import ObjectId
 from itakello_logging import ItakelloLogging
-from llm import LLM
 
-from ..classes.researcher import Researcher
-from ..serializers import DocumentSerializer
 from ..messages.message import Message
+
+# from llm import LLM
+#
+# from ..classes.researcher import Researcher
+from ..serializers import DocumentSerializer
 
 logger = ItakelloLogging.get_logger(__name__)
 
@@ -19,7 +21,7 @@ class Conversation(DocumentSerializer):
     speaker_selection_method: str
     starting_message: str
     creator: str
-    llm: LLM
+    # llm: LLM
     note: str = ""
     favourite: bool = False
     id: ObjectId = field(default_factory=ObjectId)
@@ -51,7 +53,7 @@ class Conversation(DocumentSerializer):
             conversation_rounds=doc["conversation_rounds"],
             speaker_selection_method=doc["speaker_selection_method"],
             starting_message=doc["starting_message"],
-            llm=LLM.from_document(doc["llm"]),
+            # llm=LLM.from_document(doc["llm"]),
             creator=doc["creator"],
             note=doc["note"],
             favourite=doc["favourite"],
@@ -66,7 +68,7 @@ class Conversation(DocumentSerializer):
             "conversation_rounds": self.conversation_rounds,
             "speaker_selection_method": self.speaker_selection_method,
             "starting_message": self.starting_message,
-            "llm": self.llm.to_document(),
+            # "llm": self.llm.to_document(),
             "creator": self.creator,
             "note": self.note,
             "favourite": self.favourite,
@@ -74,5 +76,4 @@ class Conversation(DocumentSerializer):
             "messages_ids": self.messages_ids,
         }
 
-    def perform(self, researcher: Researcher, manager:) -> None:
-        
+    # def perform(self, researcher: Researcher, manager:) -> None:

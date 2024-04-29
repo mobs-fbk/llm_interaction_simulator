@@ -1,8 +1,0 @@
-pyautogen
-ollama
-itakello-logging
-pymongo
-inquirer
-prompt_toolkit
-nltk
-inflect
