@@ -4,32 +4,50 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from itakello_logging import ItakelloLogging
 
+from ..general.llm import LLM
+from ..managers.agent_m import AgentManager
 from ..messages.message import Message
-
-# from llm import LLM
-#
-# from ..classes.researcher import Researcher
 from ..serializers import DocumentSerializer
+from .agent import Agent
+from .chat import Chat
+from .manager import Manager
+from .researcher import Researcher
 
 logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
 class Conversation(DocumentSerializer):
-    conversation_days: int
-    conversation_rounds: int
+    n_messages: int
+    days: int
     speaker_selection_method: str
     starting_message: str
+    llm: LLM
+    agent_combination: list[tuple[str, int]]
     creator: str
-    # llm: LLM
     note: str = ""
     favourite: bool = False
+    agents: list[Agent] = field(init=False, default_factory=list)
     id: ObjectId = field(default_factory=ObjectId)
     creation_date: datetime = field(default_factory=datetime.now)
     messages_ids: list[ObjectId] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         logger.debug(f"[{self.creator}] created a new conversation: {self.id}")
+
+    def populate_agents(self, agent_m: AgentManager) -> None:
+        self.agents = []
+        placeholders = agent_m.compose_placeholders(self.agent_combination)
+        for role, num in self.agent_combination:
+            for _ in range(num):
+                self.agents.append(
+                    Agent(
+                        role=role,
+                        placeholders=placeholders,
+                        sections=list(agent_m.shared_sections.values())
+                        + list(agent_m.roles[role].sections.values()),
+                    )
+                )
 
     def add_daily_conversation(self, raw_conversation: list[dict], day: int) -> None:
         messages = []
@@ -64,8 +82,8 @@ class Conversation(DocumentSerializer):
     def to_document(self) -> dict:
         return {
             "_id": self.id,
-            "conversation_days": self.conversation_days,
-            "conversation_rounds": self.conversation_rounds,
+            "conversation_days": self.n_messages,
+            "conversation_rounds": self.total_days,
             "speaker_selection_method": self.speaker_selection_method,
             "starting_message": self.starting_message,
             # "llm": self.llm.to_document(),
@@ -76,4 +94,7 @@ class Conversation(DocumentSerializer):
             "messages_ids": self.messages_ids,
         }
 
-    # def perform(self, researcher: Researcher, manager:) -> None:
+    def perform(self) -> None:
+        researcher = Researcher()
+        chat = Chat(self.agents, researcher, self.llm, self.speaker_selection_method)
+        manager = Manager(chat, self.llm)

@@ -22,7 +22,9 @@ class InputManager:
     def input_int(
         self,
         question: str,
+        max_value: int = 0,
         positive_requirement: bool = False,
+        even_requirement: bool = False,
     ) -> int:
         while True:
             user_input = inquirer.text(question, render=self.render)
@@ -33,6 +35,14 @@ class InputManager:
                 continue
             if positive_requirement and user_input <= 0:
                 logger.error("Invalid input. Please enter a positive number.")
+                continue
+            if even_requirement and user_input % 2 != 0:
+                logger.error("Invalid input. Please enter an even number.")
+                continue
+            if max_value and user_input > max_value:
+                logger.error(
+                    f"Invalid input. Please enter a number not greater than {max_value}."
+                )
                 continue
             return user_input
 

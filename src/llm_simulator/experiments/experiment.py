@@ -20,7 +20,6 @@ logger = ItakelloLogging.get_logger(__name__)
 @dataclass
 class Experiment(DocumentSerializer):
     starting_message: str
-    numerical_names: bool
     llm_m: LLMManager
     agent_m: AgentManager
     note: str
@@ -36,7 +35,6 @@ class Experiment(DocumentSerializer):
     @classmethod
     def from_document(cls, doc: dict) -> "Experiment":
         return cls(
-            numerical_names=doc["numerical_names"],
             starting_message=doc["starting_message"],
             llm_m=LLMManager.from_document(doc["llms"]),
             agent_m=AgentManager.from_document(doc["agents"]),
@@ -51,7 +49,6 @@ class Experiment(DocumentSerializer):
     def to_document(self) -> dict:
         return {
             "_id": self.id,
-            "numerical_names": self.numerical_names,
             "starting_message": self.starting_message,
             "llms": self.llm_m.to_document(),
             "agents": self.agent_m.to_document(),
@@ -65,7 +62,6 @@ class Experiment(DocumentSerializer):
     def __str__(self) -> str:
         return (
             f"\033[1mID\033[0m: {self.id}\n\n"
-            + f"\033[1mNumerical names\033[0m: {self.numerical_names}\n\n"
             + f"\033[1mStarting message\033[0m: {self.starting_message}\n\n"
             + f"\033[1mLLMs\033[0m:\n{str(self.llm_m)}\n\n"
             + f"\033[1mRoles\033[0m:\n{str(self.agent_m)}\n\n"
@@ -79,7 +75,6 @@ class Experiment(DocumentSerializer):
     def duplicate(self, creator: str) -> "Experiment":
         return Experiment(
             starting_message=self.starting_message,
-            numerical_names=self.numerical_names,
             llm_m=self.llm_m,
             agent_m=self.agent_m,
             note=self.note,

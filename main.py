@@ -33,7 +33,7 @@ def main() -> None:
     input_m = InputManager()  # ✅
     action_m = ActionManager()  # ✅
     experiment_m = ExperimentManager(db_m=db_m)  # ✅
-    conversation_m = ConversationManager(db_m=db_m)  # ⚒️
+    conversation_m = ConversationManager(db_m=db_m)  # ✅
 
     while True:
         action = action_m.select_initial_action()
@@ -44,8 +44,8 @@ def main() -> None:
             if experiment == None:
                 logger.warning("No experiments available. Please create a new one.")
                 continue
-        else:
-            break  # Exit the application
+        else:  # Exit the application
+            break
         logger.info(f"\nSelected experiment:\n\n{experiment}")
         while True:
             action = action_m.select_experiment_action()

@@ -35,8 +35,6 @@ class ExperimentManager:
 
         llms = self._ask_for_llms()
 
-        numerical_names = self._ask_for_numerical_names()
-
         sections = self._ask_for_sections(type=SectionType.AGENTS)
         shared_sections, private_sections = self._split_sections(sections)
 
@@ -49,7 +47,6 @@ class ExperimentManager:
 
         experiment = Experiment(
             starting_message=starting_message,
-            numerical_names=numerical_names,
             note=note,
             favourite=favourite,
             creator=creator,
@@ -120,7 +117,11 @@ class ExperimentManager:
         return experiment
 
     def select_experiment(self) -> Union[Experiment, None]:
-        experiments = self.db_m.get_experiments()
+        try:
+            experiments = self.db_m.get_experiments()
+        except httpx.ConnectError:
+            logger.error("Ollama is not currently running. Please start it.")
+            return None
         if not experiments:
             return None
         choices = []
@@ -324,7 +325,7 @@ class ExperimentManager:
                 llms = [LLM(model=name) for name in llms_names]
                 break
             except httpx.ConnectError:
-                logger.warning("Ollama is not currently running. Please start it.")
+                logger.error("Ollama is not currently running. Please start it.")
                 self.input_m.input_str(
                     "Press Enter when Ollama is running again", optional=True
                 )

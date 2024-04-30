@@ -58,7 +58,7 @@ class Section(DocumentSerializer):
         output = f"{self.content}"
         if self.title != "Starting prompt":
             output = f"##{self.title}\n\n" + output
-        output = f"---\n{output}\n---"
+        # output = f"---\n{output}\n---"
         return output
 
     def __lt__(self, other: "Section") -> bool:

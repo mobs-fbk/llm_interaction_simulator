@@ -18,49 +18,81 @@ class ConversationManager:
     input_m: InputManager = field(default_factory=InputManager)
 
     def perform_conversations(self, experiment: Experiment) -> None:
-        n_conversations = self.input_m.input_int(
-            "Enter the number of conversations you want to perform",
+        """n_conversations = self.input_m.input_int(
+            "Enter the number of conversations you want to perform per hyperparameter set (LLMs, days and agents)",
             positive_requirement=True,
         )
         llms = self.input_m.select_multiple(
-            message="Select the LLMs to use",
-            choices=[llm for llm in experiment.llm_m.llms.keys()],
+            message="1. Select the LLMs to use",
+            choices=[(str(llm), llm.name) for llm in experiment.llm_m.llms.values()],
         )
-        conversation_days = self.input_m.input_int(
-            "Enter the number of days per conversation", positive_requirement=True
+        total_messages = self.input_m.input_int(
+            "2.1. Enter the total number of messages per convesation (it has to be even)",
+            positive_requirement=True,
+            even_requirement=True,
         )
-        conversation_rounds = self.input_m.input_int(
-            "Enter the number of rounds per conversation", positive_requirement=True
+        total_days = self.input_m.input_int(
+            "2.2. Enter the number of days in which you want to perform the conversations",
+            positive_requirement=True,
+            max_value=total_messages // 2,
         )
-        speaker_selection_method = self._ask_for_speaker_selection_method()
+        if self.input_m.confirm(
+            f"Do you want to try the conversation from 1 to {total_days} days? Otherwise, the conversation will be performed only in {total_days} days."
+        ):
+            days_list = list(range(1, total_days + 1))
+        else:
+            days_list = [total_days]
 
-        agents = []
+        role_agents_num = []
         for role in experiment.agent_m.roles.values():
-            role_num = self.input_m.input_int(
-                f"Enter the number of {role.name} agents", positive_requirement=True
+            max_num = self.input_m.input_int(
+                f"Enter the maximum number of {role.name} agents",
+                positive_requirement=True,
             )
-            agents.extend([Agent(role=role.name, index=i) for i in range(role_num)])
+            role_agents_num.append((role.name, max_num))
+        try_each_agent_combination = self.input_m.confirm(
+            "Do you want to try each agent combination?"
+        )
+        agent_combinations = experiment.agent_m.get_agent_combinations(
+            role_agents_num, try_each_agent_combination
+        )
 
-        conversations = []
+        speaker_selection_method = self._ask_for_speaker_selection_method()"""
+        n_messages = 10
+
+        llms = [list(experiment.llm_m.llms.keys())[0]]
+        days_list = [1]
+        agent_combinations = [
+            [("guard", 1), ("prisoner", 1)],
+            # [("guard", 1), ("prisoner", 2)],
+            # [("guard", 2), ("prisoner", 1)],
+            # [("guard", 2), ("prisoner", 2)],
+        ]
+        n_conversations = 1
+        speaker_selection_method = "auto"
+
         for llm in llms:
-            for index in range(n_conversations):
-                logger.warning(
-                    f"Performing conversation [{index + 1}/{n_conversations}]"
-                )
-                conversation = Conversation(
-                    conversation_days=conversation_days,
-                    conversation_rounds=conversation_rounds,
-                    speaker_selection_method=speaker_selection_method,
-                    starting_message=experiment.starting_message,
-                    creator=self.db_m.username,
-                    llm=llm,
-                )
-                conversation = experiment.perform(conversation)
-                self.db_m.save_conversation(
-                    experiment=experiment, conversation=conversation
-                )
-        logger.info(f"Performed and saved {n_conversations} conversations")
-        return conversations
+            for days in days_list:
+                for agent_combination in agent_combinations:
+                    for index in range(n_conversations):
+                        logger.info(
+                            f"Performing conversation [{index + 1}/{n_conversations}]"
+                        )
+                        conversation = Conversation(
+                            n_messages=n_messages,
+                            speaker_selection_method=speaker_selection_method,
+                            starting_message=experiment.starting_message,
+                            creator=self.db_m.username,
+                            days=days,
+                            llm=experiment.llm_m.llms[llm],
+                            agent_combination=agent_combination,
+                        )
+                        conversation.populate_agents(experiment.agent_m)
+                        conversation.perform()
+                        self.db_m.save_conversation(
+                            experiment=experiment, conversation=conversation
+                        )
+        logger.confirmation(f"Performed and saved {n_conversations} conversations")
 
     def select_conversation(self, experiment: Experiment) -> Union[Conversation, None]:
         conversations = self.db_m.get_conversations(experiment.conversation_ids)

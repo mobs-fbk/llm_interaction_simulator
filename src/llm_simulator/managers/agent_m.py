@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from itakello_logging import ItakelloLogging
 
+# from ..conversations.agent import Agent
 from ..experiments.role import Role
 from ..experiments.section import Section
 from ..general.placeholder import Placeholder
@@ -184,3 +186,57 @@ class AgentManager(DocumentSerializer):
             Placeholder(tag=f"<AGENTS_NUM>"),
             Placeholder(tag=f"<ROLES_NUM>"),
         ]
+
+    def get_agent_combinations(
+        self, role_agents_num: list[tuple[str, int]], try_each_combination: bool
+    ) -> list[list[tuple[str, int]]]:
+        agent_combinations = []
+        if try_each_combination:
+            self.generate_combinations(role_agents_num, [], 0, agent_combinations)
+        else:
+            agent_combinations.append(role_agents_num)
+        return agent_combinations
+
+    def generate_combinations(
+        self,
+        nums: list[Any],
+        current_combination: list[Any],
+        index: int,
+        result: list[list[tuple[str, int]]],
+    ) -> None:
+        if index == len(nums):
+            result.append(current_combination.copy())
+            return
+        for i in range(1, nums[index][1] + 1):
+            current_combination.append((nums[index][0], i))
+            self.generate_combinations(nums, current_combination, index + 1, result)
+            current_combination.pop()
+
+    def list_combinations(
+        self, nums: list[tuple[str, int]]
+    ) -> list[list[tuple[str, int]]]:
+        result = []
+        self.generate_combinations(nums, [], 0, result)
+        return result
+
+    def compose_placeholders(
+        self, agent_combination: list[tuple[str, int]]
+    ) -> dict[str, str]:
+        placeholders = {}
+        total_agents = 0
+        for role, num in agent_combination:
+            total_agents += num
+            for placeholder in self.roles[role].placeholders.values():
+                placeholders[placeholder.tag] = placeholder.to_value(num)
+        for placeholder in self.placeholders.values():
+            if placeholder.role == "roles":
+                placeholders[placeholder.tag] = placeholder.to_value(
+                    len(agent_combination)
+                )
+
+            elif placeholder.role == "agents":
+                placeholders[placeholder.tag] = placeholder.to_value(total_agents)
+            else:
+                logger.error(f"Invalid placeholder role: {placeholder.role}")
+                exit()
+        return placeholders

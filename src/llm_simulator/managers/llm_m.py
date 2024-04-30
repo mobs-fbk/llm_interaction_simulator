@@ -13,7 +13,7 @@ class LLMManager(DocumentSerializer):
     llms: dict[str, LLM] = field(default_factory=dict)
 
     def __init__(self, llms: list[LLM]) -> None:
-        self.llms = {llm.model: llm for llm in llms}
+        self.llms = {llm.name: llm for llm in llms}
         logger.debug(f"Added {len(llms)} new llms")
 
     def to_document(self) -> list:
