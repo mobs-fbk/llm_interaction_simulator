@@ -5,8 +5,8 @@
 
 OAI_CONFIG_LIST
 experiment_settings.ini
-.vscode
 .cache
 .env
 *.egg-info/
 *.pytest_cache/
+test_llm.py
