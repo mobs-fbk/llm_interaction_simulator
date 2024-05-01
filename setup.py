@@ -16,6 +16,7 @@ setup(
         "inflect",
         "pytest",
         "pytest-mock",
+        "python-dotenv",
     ],
     python_requires=">=3.9",
 )

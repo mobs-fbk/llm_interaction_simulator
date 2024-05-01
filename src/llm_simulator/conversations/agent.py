@@ -2,12 +2,12 @@ import random
 import string
 from dataclasses import dataclass, field
 
-from autogen import ConversableAgent
 from itakello_logging import ItakelloLogging
 
 from ..experiments.section import Section
 from ..general.llm import LLM
 from ..general.placeholder import Placeholder
+from .custom_conv_agent import CustomConversableAgent
 
 logger = ItakelloLogging.get_logger(__name__)
 
@@ -34,13 +34,14 @@ class Agent:
 
         logger.debug(f"Added agent: {self.name}")
 
-    def get_conversable_agent(self, llm: LLM) -> ConversableAgent:
-        return ConversableAgent(
+    def get_conversable_agent(
+        self, llm: LLM, warns: list[str]
+    ) -> CustomConversableAgent:
+        return CustomConversableAgent(
             name=self.name,
             llm_config=llm.config,
             system_message=self.system_message,
-            human_input_mode="NEVER",
-            code_execution_config=False,
+            warns=warns,
         )
 
     def _get_random_numeric_string(self, lenght: int = 3) -> str:

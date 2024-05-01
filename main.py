@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from itakello_logging import ItakelloLogging
 
 from llm_simulator.managers.action_m import ActionManager
@@ -5,6 +6,8 @@ from llm_simulator.managers.conversation_m import ConversationManager
 from llm_simulator.managers.database_m import DatabaseManager
 from llm_simulator.managers.experiment_m import ExperimentManager
 from llm_simulator.managers.input_m import InputManager
+
+load_dotenv()
 
 ItakelloLogging(
     debug=True,
@@ -20,20 +23,15 @@ ItakelloLogging(
     ],
 )
 
+logger = ItakelloLogging().get_logger(__name__)
+
 
 def main() -> None:
-    logger = ItakelloLogging.get_logger(__name__)
-
-    while True:
-        db_m = DatabaseManager()  # ⚒️
-        if db_m.authenticate_user():
-            break
-    db_m.select_database()
-
-    input_m = InputManager()  # ✅
-    action_m = ActionManager()  # ✅
-    experiment_m = ExperimentManager(db_m=db_m)  # ✅
-    conversation_m = ConversationManager(db_m=db_m)  # ✅
+    input_m = InputManager()
+    db_m = DatabaseManager(input_m=input_m)
+    action_m = ActionManager()
+    experiment_m = ExperimentManager(db_m=db_m)
+    conversation_m = ConversationManager(db_m=db_m)
 
     while True:
         action = action_m.select_initial_action()

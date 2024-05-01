@@ -15,6 +15,7 @@ class InputManager:
 
     def __post_init__(self) -> None:
         self.render = ConsoleRender(theme=GreenPassion())
+        logger.debug("Input manager initialized")
 
     def confirm(self, message: str) -> bool:
         return inquirer.confirm(message, render=self.render)
@@ -30,21 +31,18 @@ class InputManager:
             user_input = inquirer.text(question, render=self.render)
             try:
                 user_input = int(user_input)
+                break
             except ValueError:
                 logger.error("Invalid input. Please enter a number.")
-                continue
             if positive_requirement and user_input <= 0:
                 logger.error("Invalid input. Please enter a positive number.")
-                continue
             if even_requirement and user_input % 2 != 0:
                 logger.error("Invalid input. Please enter an even number.")
-                continue
             if max_value and user_input > max_value:
                 logger.error(
                     f"Invalid input. Please enter a number not greater than {max_value}."
                 )
-                continue
-            return user_input
+        return user_input
 
     def input_float(
         self, message: str, positive_requirement: bool = False, max_value: float = 0

@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 
 from bson.objectid import ObjectId
@@ -20,23 +21,42 @@ logger = ItakelloLogging().get_logger(__name__)
 class DatabaseManager:
     input_m: InputManager = field(default_factory=InputManager)
     username: str = field(init=False)
-    client: MongoClient = field(init=False)
     db: Database = field(init=False)
 
     def __post_init__(self) -> None:
-        self.username = "admin"  # self.input_m.input_textual("Enter your username: ")
-        password = "Z5nzLsiUMPLfBnJ0"  # self.input_m.password("Enter your password: ")
-        cluster_url = "cluster0.hrahamh.mongodb.net"  # self.input_m.input_textual("Enter your MongoDB cluster URL: ")
-        self.client = MongoClient(
-            f"mongodb+srv://{self.username}:{password}@{cluster_url}/",
-            server_api=ServerApi("1"),
-        )
-        logger.debug(f"MongoDB client created with address [{self.client.address}].")
+        self.username, client = self._ask_credentials()
+        self._select_database(client)
+        logger.debug("Database manager initialized")
 
-    def authenticate_user(self) -> bool:
+    def _ask_credentials(self) -> tuple[str, MongoClient]:
+        connected = False
+        app_mode = os.getenv("APP_MODE", "production")
+        username = password = cluster_url = ""
+        client = None
+        while not connected:
+            if app_mode == "production":
+                username = self.input_m.input_str("Enter your username")
+                password = self.input_m.password("Enter your password")
+                cluster_url = self.input_m.input_str("Enter your MongoDB cluster URL")
+            else:
+                username = os.getenv("DB_USER", "default_username")
+                password = os.getenv("DB_PASSWORD", "default_password")
+                cluster_url = os.getenv("DB_CLUSTER_URL", "default_cluster_url")
+            client = MongoClient(
+                f"mongodb+srv://{username}:{password}@{cluster_url}/",
+                server_api=ServerApi("1"),
+            )
+            connected = self._check_connection(client)
+        if client == None:
+            logger.error("MongoDB client not created")
+            exit()
+        logger.debug(f"MongoDB client created with address [{client.address}].")
+        return username, client
+
+    def _check_connection(self, client: MongoClient) -> bool:
         try:
-            self.client.admin.command("ping")
-            logger.debug("MongoDB connection established.")
+            client.admin.command("ping")
+            logger.confirmation("MongoDB connection established.")
             return True
         except ConfigurationError:
             logger.error("Invalid cluster URL")
@@ -45,8 +65,8 @@ class DatabaseManager:
             logger.error("Authentication failed")
             return False
 
-    def select_database(self) -> None:
-        databases = self._list_databases()
+    def _select_database(self, client: MongoClient) -> None:
+        databases = self._list_databases(client)
         if not databases:
             selected_db = DEFAULT_DATABASE
             logger.warning(
@@ -54,11 +74,11 @@ class DatabaseManager:
             )
         else:
             selected_db = self.input_m.select_one("Select a database", databases)
-        self.db = self.client[selected_db]
+        self.db = client[selected_db]
         logger.debug(f"Selected database: {selected_db}")
 
-    def _list_databases(self) -> list[str]:
-        databases = self.client.list_database_names()
+    def _list_databases(self, client: MongoClient) -> list[str]:
+        databases = client.list_database_names()
         databases.remove("admin")
         databases.remove("local")
         return databases

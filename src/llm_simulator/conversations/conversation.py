@@ -93,8 +93,3 @@ class Conversation(DocumentSerializer):
             "creation_date": self.creation_date,
             "messages_ids": self.messages_ids,
         }
-
-    def perform(self) -> None:
-        researcher = Researcher()
-        chat = Chat(self.agents, researcher, self.llm, self.speaker_selection_method)
-        manager = Manager(chat, self.llm)

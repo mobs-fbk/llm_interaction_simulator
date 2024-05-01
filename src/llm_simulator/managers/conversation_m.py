@@ -94,6 +94,32 @@ class ConversationManager:
                         )
         logger.confirmation(f"Performed and saved {n_conversations} conversations")
 
+    def perform(self, conversation: Conversation) -> None:
+        researcher = Researcher()
+        warns = [f"{agent.capitalize()}:" for agent, _ in self.agent_combination]
+        conv_agents = [
+            agent.get_conversable_agent(llm=self.llm, warns=warns)
+            for agent in self.agents
+        ]
+        chat = Chat(
+            agents=conv_agents,  # type: ignore
+            selection_method=self.speaker_selection_method,
+            round_number=self.n_messages // self.days,
+        )
+        manager = Manager(chat, self.llm)
+
+        start_message = self.starting_message
+        for i in range(self.days):
+            researcher.initiate_chat(
+                recipient=manager, clear_history=True, message=start_message
+            )
+            raw_conversation = chat.messages
+            start_message += "\n" + self.summarizer.generate_summary(
+                previous_conversation=raw_conversation[1:], round_number=i + 1
+            )
+            self.add_daily_conversation(raw_conversation, day=i + 1)
+        logger.confirmation("Conversation complete")
+
     def select_conversation(self, experiment: Experiment) -> Union[Conversation, None]:
         conversations = self.db_m.get_conversations(experiment.conversation_ids)
         if not conversations:
