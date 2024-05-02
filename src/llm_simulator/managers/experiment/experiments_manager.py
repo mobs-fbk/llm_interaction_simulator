@@ -6,26 +6,29 @@ import httpx
 import ollama
 from itakello_logging import ItakelloLogging
 
-from ..conversations.agent import Agent
-from ..conversations.conversation import Conversation
-from ..experiments.experiment import Experiment
-from ..experiments.role import Role
-from ..experiments.section import Section
-from ..general.llm import LLM
-from ..utility.consts import TIME_FORMAT
-from ..utility.enums import SectionType
-from .agent_m import AgentManager
+from ...conversations.agent import Agent
+from ...conversations.conversation import Conversation
+from .experiment import Experiment
+from ...components.role import Role
+from ...components.section import Section
+from ..llm.llm import LLM
+from ...utility.consts import TIME_FORMAT
+from ...utility.enums import SectionType
+from ..agent.agent_manager import AgentManager
 from .database_m import DatabaseManager
 from .input_m import InputManager
-from .llm_m import LLMManager
+from ..llm.llm_manager import LLMManager
 
 logger = ItakelloLogging().get_logger(__name__)
 
 
 @dataclass
-class ExperimentManager:
+class ExperimentsManager:
+    input_m: InputManager
     db_m: DatabaseManager
-    input_m: InputManager = field(default_factory=InputManager)
+
+    def __post_init__(self) -> None:
+        logger.debug("Experiment manager initialized")
 
     def create_experiment(self, creator: str) -> Experiment:
 
@@ -75,7 +78,6 @@ class ExperimentManager:
             choices=[
                 "Starting message",  # ✅
                 "LLMs",  # ✅
-                "Numerical names",  # ✅
                 "Agents",  # ✅
                 "Summarizer",  # ✅
                 "Note",  # ✅
@@ -93,11 +95,6 @@ class ExperimentManager:
             logger.info("Previous LLMs:\n" + str(experiment.llm_m))
             llms = self._ask_for_llms()
             experiment.llm_m = LLMManager(llms=llms)
-        if "Numerical names" in changes:
-            logger.info(
-                "Previous numerical names status: " + str(experiment.numerical_names)
-            )
-            experiment.numerical_names = self._ask_for_numerical_names()
         if "Agents" in changes:
             self._update_agents(experiment)
         if "Summarizer" in changes:

@@ -4,14 +4,14 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from itakello_logging import ItakelloLogging
 
-from ..general.llm import LLM
-from ..managers.agent_m import AgentManager
-from ..messages.message import Message
-from ..serializers import DocumentSerializer
-from .agent import Agent
-from .chat import Chat
-from .manager import Manager
-from .researcher import Researcher
+from ...components.agent import Agent
+from ...components.chat import Chat
+from ...components.manager import Manager
+from ...components.message import Message
+from ...components.researcher import Researcher
+from ...utility.document_serializer import DocumentSerializer
+from ..agent.agent_manager import AgentManager
+from ..llm.llm import LLM
 
 logger = ItakelloLogging.get_logger(__name__)
 

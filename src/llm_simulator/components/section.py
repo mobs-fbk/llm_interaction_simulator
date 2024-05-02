@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from itakello_logging import ItakelloLogging
 
-from ..serializers.document_serializer import DocumentSerializer
+from ..utility.document_serializer import DocumentSerializer
 from ..utility.enums import SectionType
 
 logger = ItakelloLogging.get_logger(__name__)

@@ -4,9 +4,9 @@ from dataclasses import dataclass, field
 
 from itakello_logging import ItakelloLogging
 
-from ..experiments.section import Section
-from ..general.llm import LLM
-from ..general.placeholder import Placeholder
+from .section import Section
+from ..managers.llm.llm import LLM
+from .placeholder import Placeholder
 from .custom_conv_agent import CustomConversableAgent
 
 logger = ItakelloLogging.get_logger(__name__)

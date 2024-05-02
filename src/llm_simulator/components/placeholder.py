@@ -5,7 +5,7 @@ import nltk
 from itakello_logging import ItakelloLogging
 from nltk import pos_tag
 
-from ..serializers.document_serializer import DocumentSerializer
+from ..utility.document_serializer import DocumentSerializer
 from ..utility.enums import PlaceholderType
 
 nltk.download("averaged_perceptron_tagger", quiet=True)

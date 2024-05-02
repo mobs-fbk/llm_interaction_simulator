@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from bson.objectid import ObjectId
 
-from ..serializers import DocumentSerializer
+from ..utility.document_serializer import DocumentSerializer
 
 
 @dataclass

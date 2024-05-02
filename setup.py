@@ -17,6 +17,7 @@ setup(
         "pytest",
         "pytest-mock",
         "python-dotenv",
+        "asyncio",
     ],
-    python_requires=">=3.9",
+    python_requires=">=3.10",
 )

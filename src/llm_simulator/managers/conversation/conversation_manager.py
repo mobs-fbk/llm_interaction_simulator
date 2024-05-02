@@ -3,19 +3,22 @@ from typing import Union
 
 from itakello_logging import ItakelloLogging
 
-from ..conversations.conversation import Conversation
-from ..experiments.experiment import Experiment
-from ..utility.consts import TIME_FORMAT
-from .database_m import DatabaseManager
-from .input_m import InputManager
+from ...core.database_manager import DatabaseManager
+from ...core.input_manager import InputManager
+from ...utility.consts import TIME_FORMAT
+from ..experiment.experiment import Experiment
+from .conversation import Conversation
 
 logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
 class ConversationManager:
+    input_m: InputManager
     db_m: DatabaseManager
-    input_m: InputManager = field(default_factory=InputManager)
+
+    def __post_init__(self) -> None:
+        logger.debug("Conversation manager initialized")
 
     def perform_conversations(self, experiment: Experiment) -> None:
         """n_conversations = self.input_m.input_int(

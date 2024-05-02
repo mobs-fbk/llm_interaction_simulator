@@ -4,15 +4,15 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from itakello_logging import ItakelloLogging
 
-from ..conversations.agent import Agent
-from ..conversations.chat import Chat
-from ..conversations.conversation import Conversation
-from ..conversations.manager import Manager
-from ..conversations.researcher import Researcher
-from ..managers.agent_m import AgentManager
-from ..managers.llm_m import LLMManager
-from ..serializers.document_serializer import DocumentSerializer
-from ..utility.consts import TIME_FORMAT
+from ...components.agent import Agent
+from ...components.chat import Chat
+from ...components.manager import Manager
+from ...components.researcher import Researcher
+from ...utility.consts import TIME_FORMAT
+from ...utility.document_serializer import DocumentSerializer
+from ..agent.agent_manager import AgentManager
+from ..conversation.conversation import Conversation
+from ..llm.llm_manager import LLMManager
 
 logger = ItakelloLogging.get_logger(__name__)
 

@@ -6,7 +6,7 @@ from inquirer.render.console import ConsoleRender
 from inquirer.themes import GreenPassion
 from itakello_logging import ItakelloLogging
 
-logger = ItakelloLogging.get_logger(__name__)
+logger = ItakelloLogging().get_logger(__name__)
 
 
 @dataclass
@@ -18,36 +18,48 @@ class InputManager:
         logger.debug("Input manager initialized")
 
     def confirm(self, message: str) -> bool:
-        return inquirer.confirm(message, render=self.render)
+        logger.debug(f"Message: {message}")
+        user_input = inquirer.confirm(message, render=self.render)
+        logger.debug(f"Input: {user_input}")
+        return user_input
 
     def input_int(
         self,
-        question: str,
+        message: str,
         max_value: int = 0,
         positive_requirement: bool = False,
         even_requirement: bool = False,
     ) -> int:
-        while True:
-            user_input = inquirer.text(question, render=self.render)
+        logger.debug(f"Message: {message}")
+        correct = False
+        user_input = 0
+        while not correct:
+            user_input = inquirer.text(message, render=self.render)
             try:
                 user_input = int(user_input)
-                break
             except ValueError:
                 logger.error("Invalid input. Please enter a number.")
+                continue
             if positive_requirement and user_input <= 0:
                 logger.error("Invalid input. Please enter a positive number.")
-            if even_requirement and user_input % 2 != 0:
+            elif even_requirement and user_input % 2 != 0:
                 logger.error("Invalid input. Please enter an even number.")
-            if max_value and user_input > max_value:
+            elif max_value and user_input > max_value:
                 logger.error(
                     f"Invalid input. Please enter a number not greater than {max_value}."
                 )
+            else:
+                correct = True
+        logger.debug(f"Input: {user_input}")
         return user_input
 
     def input_float(
         self, message: str, positive_requirement: bool = False, max_value: float = 0
     ) -> float:
-        while True:
+        logger.debug(f"Message: {message}")
+        correct = False
+        user_input = 0.0
+        while not correct:
             user_input = inquirer.text(message, render=self.render)
             try:
                 user_input = float(user_input)
@@ -56,13 +68,14 @@ class InputManager:
                 continue
             if positive_requirement and user_input < 0:
                 logger.error("Invalid input. Please enter a positive number.")
-                continue
-            if max_value and user_input > max_value:
+            elif max_value and user_input > max_value:
                 logger.error(
                     f"Invalid input. Please enter a number not greater than {max_value}."
                 )
-                continue
-            return user_input
+            else:
+                correct = True
+        logger.debug(f"Input: {user_input}")
+        return user_input
 
     def input_str(
         self,
@@ -70,14 +83,19 @@ class InputManager:
         optional: bool = False,
         example: str = "",
     ) -> str:
-        while True:
+        logger.debug(f"Message: {message}")
+        correct = False
+        user_input = ""
+        while not correct:
             if example:
                 message += f" (e.g. {example})"
             user_input = inquirer.text(message, render=self.render)
             if not optional and not user_input:
                 logger.error("Invalid input. Please enter a value.")
-                continue
-            return user_input
+            else:
+                correct = True
+        logger.debug(f"Input: {user_input}")
+        return user_input
 
     def input_list(
         self,
@@ -89,31 +107,60 @@ class InputManager:
         message += " [comma-separated list]"
         if example:
             message += f" (e.g. {example})"
-        while True:
+        logger.debug(f"Message: {message}")
+        correct = False
+        items = []
+        while not correct:
             user_input = inquirer.text(message, render=self.render)
             items = [item.strip() for item in user_input.split(",")]
             if avoid_duplicates and len(set(items)) != len(items):
                 logger.error("Invalid input. Please ensure all items are different.")
                 continue
             if "" in items:
-                if len(items) == 1 and not optional:
-                    logger.error("Invalid input. Please enter at least one value.")
+                if len(items) == 1:
+                    if optional:
+                        items = []
+                        correct = True
+                    else:
+                        logger.error("Invalid input. Please enter at least one value.")
                 else:
                     logger.error(
                         "Invalid input. Please ensure there are no empty values."
                     )
                 continue
-            return items
+            else:
+                correct = True
+        logger.debug(f"Input: {items}")
+        return items
 
     def select_one(
         self, message: str, choices: Union[list[str], list[tuple[str, str]]]
     ) -> str:
-        return inquirer.list_input(message=message, choices=choices, render=self.render)
+        logger.debug(f"Message: {message}")
+        user_input = inquirer.list_input(
+            message=message, choices=choices, render=self.render
+        )
+        logger.debug(f"Input: {user_input}")
+        return user_input
 
     def select_multiple(
         self, message: str, choices: Union[list[str], list[tuple[str, str]]]
     ) -> list[str]:
-        return inquirer.checkbox(message=message, choices=choices, render=self.render)
+        logger.debug(f"Message: {message}")
+        user_input = inquirer.checkbox(
+            message=message, choices=choices, render=self.render
+        )
+        logger.debug(f"Input: {user_input}")
+        return user_input
 
     def password(self, message: str) -> str:
-        return inquirer.password(message, render=self.render)
+        logger.debug(f"Message: {message}")
+        user_input = inquirer.password(message, render=self.render)
+        logger.debug(f"Input: {user_input}")
+        return user_input
+
+
+if __name__ == "__main__":
+    input_m = InputManager()
+    output = input_m.input_list("Enter a list of items", example="item1, item2, item3")
+    print(output)

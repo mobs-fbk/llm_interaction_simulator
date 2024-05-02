@@ -1,1 +1,0 @@
-from .document_serializer import DocumentSerializer

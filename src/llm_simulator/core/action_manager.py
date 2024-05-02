@@ -2,14 +2,17 @@ from dataclasses import dataclass, field
 
 from itakello_logging import ItakelloLogging
 
-from .input_m import InputManager
+from .input_manager import InputManager
 
 logger = ItakelloLogging.get_logger(__name__)
 
 
 @dataclass
 class ActionManager:
-    input_m: InputManager = field(default_factory=InputManager)
+    input_m: InputManager
+
+    def __post_init__(self) -> None:
+        logger.debug("Action manager initialized")
 
     def select_initial_action(self) -> str:
         return self.input_m.select_one(

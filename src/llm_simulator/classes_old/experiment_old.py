@@ -10,7 +10,7 @@ from ..conversation.chat import Chat
 from ..classes.conversation import Conversation
 
 # from . import CustomAgentOld, Guard, Manager, Prisoner, Researcher, Summarizer
-from ..serializers.document_serializer import DocumentSerializer
+from ..utility.document_serializer import DocumentSerializer
 
 logger = ItakelloLogging.get_logger(__name__)
 

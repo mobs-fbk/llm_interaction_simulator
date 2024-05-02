@@ -2,9 +2,9 @@ from dataclasses import dataclass, field
 
 from itakello_logging import ItakelloLogging
 
-from llm_simulator.general.placeholder import Placeholder
+from llm_simulator.components.placeholder import Placeholder
 
-from ..serializers.document_serializer import DocumentSerializer
+from ..utility.document_serializer import DocumentSerializer
 from .section import Section
 
 logger = ItakelloLogging.get_logger(__name__)

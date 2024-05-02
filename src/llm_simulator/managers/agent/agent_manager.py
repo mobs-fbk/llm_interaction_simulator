@@ -3,13 +3,14 @@ from typing import Any
 
 from itakello_logging import ItakelloLogging
 
+from ...components.placeholder import Placeholder
+
 # from ..conversations.agent import Agent
-from ..experiments.role import Role
-from ..experiments.section import Section
-from ..general.placeholder import Placeholder
-from ..serializers.document_serializer import DocumentSerializer
-from ..utility.enums import SectionType
-from .input_m import InputManager
+from ...components.role import Role
+from ...components.section import Section
+from ...core.input_manager import InputManager
+from ...utility.document_serializer import DocumentSerializer
+from ...utility.enums import SectionType
 
 logger = ItakelloLogging().get_logger(__name__)
 

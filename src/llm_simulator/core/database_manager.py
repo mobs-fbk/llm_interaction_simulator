@@ -8,18 +8,18 @@ from pymongo.errors import ConfigurationError, OperationFailure
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-from ..conversations.conversation import Conversation
-from ..experiments.experiment import Experiment
-from ..messages.message import Message
+from ..components.message import Message
+from ..managers.conversation.conversation import Conversation
+from ..managers.experiment.experiment import Experiment
 from ..utility.consts import DEFAULT_DATABASE
-from .input_m import InputManager
+from .input_manager import InputManager
 
 logger = ItakelloLogging().get_logger(__name__)
 
 
 @dataclass
 class DatabaseManager:
-    input_m: InputManager = field(default_factory=InputManager)
+    input_m: InputManager
     username: str = field(init=False)
     db: Database = field(init=False)
 
@@ -81,6 +81,7 @@ class DatabaseManager:
         databases = client.list_database_names()
         databases.remove("admin")
         databases.remove("local")
+        logger.debug(f"Databases found: {databases}")
         return databases
 
     def save_experiment(self, experiment: Experiment) -> None:
