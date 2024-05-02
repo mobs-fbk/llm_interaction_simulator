@@ -1,13 +1,13 @@
-<h1 align="center">LLM Prison Experiment</h1>
+<h1 align="center">LLM Interaction Simulator</h1>
 
-## 👮🏻‍♂️ What is the LLM Prison Experiment?
-The LLM Prison Experiment is a cutting-edge simulation that draws inspiration from the famous Stanford Prison Experiment, a significant study in social psychology. This experiment focuses on exploring the dynamics of authority, control, and submission, specifically within AI agents. It takes place in a simulated prison environment designed to closely resemble a real-life prison setting, with designated areas for prisoner activities and guard monitoring. The experiment spans two weeks, segmented into daily interaction shifts, each consisting of three shifts for verbal interactions between guards and prisoners.
+## 🌟 What is LLM Interaction Simulator?
+The **LLM Interaction Simulator** is a robust framework designed to simulate and analyze interactions between different Language Learning Models (LLMs) acting as autonomous agents in varied scenarios. This tool supports the dynamic definition of agent roles, the number of interacting agents, the complexity of their interactions, and customization of interaction parameters, making it highly adaptable for diverse experimental needs.
 
-### Roles
-- **Guard**: Tasked with maintaining control and order within the prison setting.
-- **Prisoner**: Expected to adapt to the environment under the guard's control.
-
+### 🎭 Case Study: The Prison Role Experiment
+In the "Prison Role Experiment", LLMs take on the roles of guards and prisoners to explore strategies of supervision and hostility to the power. This scenario tests various strategies, compliance, and conflict dynamics, illustrating the simulator’s ability to adjust prompts and interactions dynamically based on the number of agents involved and the specific roles they play.
 The primary aim of this experiment is to observe and analyze how AI agents behave and interact in roles of authority and subordination within a controlled environment. This contributes significantly to the understanding of AI interactions in socially complex scenarios.
+
+More details on how roles and interactions can be dynamically defined are available in the Configuration Settings section.
 
 ## 🚀 Getting Started
 
@@ -27,7 +27,7 @@ python -m venv llm_prison
 source llm_prison/bin/activate
 
 # Install the required libraries from requirements.txt
-pip install -r requirements.txt
+pip install .
 ```
 
 ### 🤔 Usage
