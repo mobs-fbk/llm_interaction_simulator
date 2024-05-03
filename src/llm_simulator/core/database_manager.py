@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass, field
 
 from bson.objectid import ObjectId
@@ -8,40 +7,42 @@ from pymongo.errors import ConfigurationError, OperationFailure
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-from ..components.message import Message
-from ..managers.conversation.conversation import Conversation
-from ..managers.experiment.experiment import Experiment
-from ..utility.consts import DEFAULT_DATABASE
+from ..abstracts import BaseManager
+from ..components.conversation.conversation import Conversation
+from ..components.experiment.experiment import Experiment
+from ..components.message.message import Message
+from ..utility.consts import DEFAULT_DATABASE, DEV_MODE
+from ..utility.custom_os import CustomOS
 from .input_manager import InputManager
 
 logger = ItakelloLogging().get_logger(__name__)
 
 
 @dataclass
-class DatabaseManager:
+class DatabaseManager(BaseManager):
     input_m: InputManager
+
     username: str = field(init=False)
     db: Database = field(init=False)
 
     def __post_init__(self) -> None:
         self.username, client = self._ask_credentials()
         self._select_database(client)
-        logger.debug("Database manager initialized")
+        super().__post_init__()
 
     def _ask_credentials(self) -> tuple[str, MongoClient]:
         connected = False
-        app_mode = os.getenv("APP_MODE", "production")
         username = password = cluster_url = ""
         client = None
         while not connected:
-            if app_mode == "production":
-                username = self.input_m.input_str("Enter your username")
-                password = self.input_m.password("Enter your password")
-                cluster_url = self.input_m.input_str("Enter your MongoDB cluster URL")
+            if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
+                username = CustomOS.getenv("DB_USER")
+                password = CustomOS.getenv("DB_PASSWORD")
+                cluster_url = CustomOS.getenv("DB_CLUSTER_URL")
             else:
-                username = os.getenv("DB_USER", "default_username")
-                password = os.getenv("DB_PASSWORD", "default_password")
-                cluster_url = os.getenv("DB_CLUSTER_URL", "default_cluster_url")
+                username = self.input_m.input_str("Enter your MongoDB username")
+                password = self.input_m.password("Enter your MongoDB password")
+                cluster_url = self.input_m.input_str("Enter your MongoDB cluster URL")
             client = MongoClient(
                 f"mongodb+srv://{username}:{password}@{cluster_url}/",
                 server_api=ServerApi("1"),
@@ -49,7 +50,7 @@ class DatabaseManager:
             connected = self._check_connection(client)
         if client == None:
             logger.error("MongoDB client not created")
-            exit()
+            raise ValueError("MongoDB client not created")
         logger.debug(f"MongoDB client created with address [{client.address}].")
         return username, client
 
@@ -66,14 +67,17 @@ class DatabaseManager:
             return False
 
     def _select_database(self, client: MongoClient) -> None:
-        databases = self._list_databases(client)
-        if not databases:
-            selected_db = DEFAULT_DATABASE
-            logger.warning(
-                f"No databases found. Creating a new one named {selected_db}."
-            )
+        if CustomOS.getenv("APP_MODE", "") == "development":
+            selected_db = "development"
         else:
-            selected_db = self.input_m.select_one("Select a database", databases)
+            databases = self._list_databases(client)
+            if not databases:
+                selected_db = DEFAULT_DATABASE
+                logger.warning(
+                    f"No databases found. Creating a new one named {selected_db}."
+                )
+            else:
+                selected_db = self.input_m.select_one("Select a database", databases)
         self.db = client[selected_db]
         logger.debug(f"Selected database: {selected_db}")
 

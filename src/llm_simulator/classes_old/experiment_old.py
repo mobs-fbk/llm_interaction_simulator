@@ -6,17 +6,16 @@ import autogen
 from bson.objectid import ObjectId
 from itakello_logging import ItakelloLogging
 
-from ..conversation.chat import Chat
-from ..classes.conversation import Conversation
-
 # from . import CustomAgentOld, Guard, Manager, Prisoner, Researcher, Summarizer
-from ..utility.document_serializer import DocumentSerializer
+from ..abstracts.mongo_model import MongoModel
+from ..classes.conversation import Conversation
+from ..conversation.chat import Chat
 
-logger = ItakelloLogging.get_logger(__name__)
+logger = ItakelloLogging().get_logger(__name__)
 
 
 @dataclass
-class ExperimentOld(DocumentSerializer):
+class ExperimentOld(MongoModel):
     config: dict
     id: ObjectId = field(init=False)
     conversations_ids: list[ObjectId] = field(default_factory=list)

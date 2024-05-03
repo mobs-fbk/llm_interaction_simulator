@@ -1,45 +1,31 @@
 from dotenv import load_dotenv
 from itakello_logging import ItakelloLogging
 
+from llm_simulator.components.conversation.conversation_manager import (
+    ConversationManager,
+)
+from llm_simulator.components.experiment.experiment_manager import ExperimentManager
+from llm_simulator.components.message.message_manager import MessageManager
 from llm_simulator.core.action_manager import ActionManager
 from llm_simulator.core.database_manager import DatabaseManager
 from llm_simulator.core.input_manager import InputManager
-from llm_simulator.managers.agent.agent_manager import AgentManager
-from llm_simulator.managers.conversation.conversation_manager import ConversationManager
-from llm_simulator.managers.experiment.experiment_manager import ExperimentManager
-from llm_simulator.managers.llm.llm_manager import LLMManager
+from llm_simulator.utility.custom_os import CustomOS
 
-load_dotenv()
-
-ItakelloLogging(
-    debug=True,
-    excluded_modules=[
-        "docker.utils.config",
-        "docker.auth",
-        "httpx",
-        "httpcore.connection",
-        "httpcore.http11",
-        "autogen.io.base",
-        "asyncio",
-        "openai._base_client",  # Remove to see API requests debug logs
-    ],
-)
-
-logger = ItakelloLogging().get_logger(__name__)
+logger = ItakelloLogging.get_logger(__name__)
 
 
 def main() -> None:
+    logger.debug("Test debug mode is working")
     input_m = InputManager()
     db_m = DatabaseManager(input_m=input_m)
-    actions_m = ActionManager(input_m=input_m)
-    # agent_m = AgentManager(input_m=input_m)
-    llm_m = LLMManager(input_m=input_m)
+    action_m = ActionManager(input_m=input_m)
+
     experiment_m = ExperimentManager(input_m=input_m, db_m=db_m)
     conversation_m = ConversationManager(input_m=input_m, db_m=db_m)
-    # message_m = MessageManager(input_m=input_m, db_m=db_m)
+    message_m = MessageManager(input_m=input_m, db_m=db_m)
 
     while True:
-        action = actions_m.select_initial_action()
+        action = action_m.select_initial_action()
         if action == "Create new experiment":  # ✅
             experiment = experiment_m.create_experiment(creator=db_m.username)
         elif action == "Select experiment":  # ✅
@@ -51,17 +37,22 @@ def main() -> None:
             break
         logger.info(f"\nSelected experiment:\n\n{experiment}")
         while True:
-            action = actions_m.select_experiment_action()
+            action = action_m.select_experiment_action()
             if action == "Perform new conversations":  # ⚒️
                 conversation_m.perform_conversations(experiment)
                 continue
-            elif action == "Duplicate and update experiment":  # ✅
+            elif action == "Duplicate and update experiment":  # ⚒️
                 experiment = experiment_m.duplicate_and_update_experiment(experiment)
                 if experiment != None:
                     logger.info(f"\nUpdated experiment:\n\n{experiment}")
                 break
             elif action == "Select old conversations":  # ✅
                 conversation = conversation_m.select_conversation(experiment)
+                if conversation == None:
+                    logger.warning(
+                        "No conversations available for this experiment. Plese perform new ones."
+                    )
+                    continue
             elif action == "Delete experiment":  # ✅
                 if experiment.creator != db_m.username:
                     logger.warning(
@@ -75,7 +66,7 @@ def main() -> None:
             else:  # Go back
                 break
             while True:
-                action = actions_m.select_conversation_action()
+                """action = action_m.select_conversation_action()
                 if action == "View conversation":  # ❌
                     # ui_m.view_conversation(conversation_dict)
                     pass
@@ -94,8 +85,23 @@ def main() -> None:
                         conversation_m.delete_conversation(experiment, conversation)
                     break
                 else:  # Go back
-                    break
+                    break"""
 
 
 if __name__ == "__main__":
+    # argparse.Ar
+    load_dotenv()
+    ItakelloLogging(
+        debug=CustomOS.getenv("APP_MODE", "") == "development",
+        excluded_modules=[
+            "docker.utils.config",
+            "docker.auth",
+            "httpx",
+            "httpcore.connection",
+            "httpcore.http11",
+            "autogen.io.base",
+            "asyncio",
+            "openai._base_client",  # Remove to see API requests debug logs
+        ],
+    )
     main()

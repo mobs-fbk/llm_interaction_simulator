@@ -6,16 +6,18 @@ from inquirer.render.console import ConsoleRender
 from inquirer.themes import GreenPassion
 from itakello_logging import ItakelloLogging
 
+from ..abstracts import BaseManager
+
 logger = ItakelloLogging().get_logger(__name__)
 
 
 @dataclass
-class InputManager:
+class InputManager(BaseManager):
     render: ConsoleRender = field(init=False)
 
     def __post_init__(self) -> None:
         self.render = ConsoleRender(theme=GreenPassion())
-        logger.debug("Input manager initialized")
+        super().__post_init__()
 
     def confirm(self, message: str) -> bool:
         logger.debug(f"Message: {message}")
