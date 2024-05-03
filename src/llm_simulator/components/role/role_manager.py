@@ -43,3 +43,28 @@ class RoleManager(BaseManager):
             )
             roles.append(new_role)
         return roles
+
+    def ask_for_updated_roles(self, old_roles: dict[str, Role]) -> list[Role]:
+        logger.instruction(
+            "1. The new roles will be appended to the existing one\n"
+            + "2. The roles that are not reinserted will be deleted.\n"
+        )
+        logger.info("Previous roles: " + ", ".join(old_roles.keys()))
+
+        old_private_sections_copy = self.get_private_sections_copy(old_roles)
+
+        new_roles = self.ask_for_roles(old_private_sections_copy)
+        for role in new_roles:
+            if role.name in old_roles:
+                role.sections = old_roles[role.name].sections
+        return new_roles
+
+    def get_private_sections_copy(self, roles: dict[str, Role]) -> list[Section]:
+        private_sections_copy = deepcopy(
+            list(list(roles.values())[0].sections.values())
+        )
+        for section in private_sections_copy:
+            section.content = ""
+            section.role = ""
+            section.type = SectionType.PRIVATE
+        return private_sections_copy

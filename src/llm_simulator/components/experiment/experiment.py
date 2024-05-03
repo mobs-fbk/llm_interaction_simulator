@@ -156,12 +156,19 @@ class Experiment(MongoModel):
             + f"\033[1mCreation date\033[0m: {self.creation_date.strftime(TIME_FORMAT)}\n\n"
         )
 
-    """def duplicate(self, creator: str) -> "Experiment":
+    def duplicate(self, creator: str) -> "Experiment":
         return Experiment(
             starting_message=self.starting_message,
-            llm_m=self.llm_m,
-            agent_m=self.agent_m,
             note=self.note,
             favourite=self.favourite,
             creator=creator,
-        )"""
+            llms_list=[llm for llm in self.llms.values()],
+            roles_list=[role for role in self.roles.values()],
+            shared_sections_list=[section for section in self.shared_sections.values()],
+            summarizer_sections_list=[
+                section for section in self.summarizer_sections.values()
+            ],
+            placeholders_list=[
+                placeholder for placeholder in self.placeholders.values()
+            ],
+        )

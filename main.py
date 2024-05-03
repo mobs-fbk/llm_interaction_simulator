@@ -15,7 +15,7 @@ logger = ItakelloLogging.get_logger(__name__)
 
 
 def main() -> None:
-    logger.debug("Test debug mode is working")
+    logger.debug("[Test debug mode]")
     input_m = InputManager()
     db_m = DatabaseManager(input_m=input_m)
     action_m = ActionManager(input_m=input_m)
@@ -89,7 +89,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # argparse.Ar
     load_dotenv()
     ItakelloLogging(
         debug=CustomOS.getenv("APP_MODE", "") == "development",

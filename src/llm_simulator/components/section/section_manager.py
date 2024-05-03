@@ -19,58 +19,35 @@ logger = ItakelloLogging().get_logger(__name__)
 class SectionManager(BaseManager):
     input_m: InputManager
 
-    def __str__(self) -> str:
-        roles = "\n".join([str(role) for role in self.roles.values()])
-        shared_sections = "\n\n".join(
-            [str(section) for section in self.shared_sections.values()]
+    def ask_for_updated_sections(
+        self,
+        old_sections: dict[str, Section],
+        type: Literal[SectionType.SUMMARIZER, SectionType.ROLES],
+    ) -> list[Section]:
+        instructions = (
+            "1. The new sections will be appended to the existing one, using the new order\n"
+            + "2. The sections that are not reinserted will be deleted.\n"
         )
-        summarizer_sections = "\n\n".join(
-            [str(section) for section in self.summarizer_sections.values()]
-        )
-        placeholders = "\n\n".join(
-            [str(placeholder) for placeholder in self.placeholders.values()]
-        )
-        return (
-            f"{roles}\n\n"
-            + f"\033[1mShared sections\033[0m:\n\n{shared_sections}\n\n"
-            + f"\033[1mSummarizer sections\033[0m:\n\n{summarizer_sections}\n\n"
-            + f"\033[1mGlobal placeholders\033[0m:\n\n{placeholders}"
-        )
+        if type == SectionType.ROLES:
+            instructions += "3. If a section changes from shared to private (or viceversa), you will be asked to insert the new content\n"
+        logger.instruction(instructions)
 
-    @classmethod
-    def from_document(cls, doc: dict) -> "SectionManager":
-        obj = cls(input_m=InputManager())
-        obj.populate(
-            roles=[Role.from_document(role) for role in doc["roles"]],
-            shared_sections=[
-                Section.from_document(section) for section in doc["shared_sections"]
-            ],
-            summarizer_sections=[
-                Section.from_document(section) for section in doc["summarizer_sections"]
-            ],
-            placeholders=[
-                Placeholder.from_document(placeholder)
-                for placeholder in doc["placeholders"]
-            ],
-        )
-        return obj
+        old_sections_titles = [
+            (
+                section.title
+                if section.type == SectionType.PRIVATE
+                or section.type == SectionType.SUMMARIZER
+                else f"{section.title} (SHARED)"
+            )
+            for section in old_sections.values()
+        ]
+        logger.info("Previous sections: " + ", ".join(old_sections_titles[1:]))
 
-    def to_document(self) -> dict:
-        return {
-            "roles": [role.to_document() for role in self.roles.values()],
-            "shared_sections": [
-                section.to_document() for section in self.shared_sections.values()
-            ],
-            "summarizer_sections": [
-                section.to_document() for section in self.summarizer_sections.values()
-            ],
-            "placeholders": [
-                placeholder.to_document() for placeholder in self.placeholders.values()
-            ],
-        }
+        new_sections = self.ask_for_sections(type=type)
+        return new_sections
 
     def ask_for_sections(
-        self, type: Literal[SectionType.SUMMARIZER, SectionType.AGENTS]
+        self, type: Literal[SectionType.SUMMARIZER, SectionType.ROLES]
     ) -> list[Section]:
         logger.instruction(
             "1. The sections will be ordered by the order you insert them\n"
@@ -78,7 +55,7 @@ class SectionManager(BaseManager):
             + f"3. The inserted sections will be used only for the {type.value}\n"
         )
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
-            if type == SectionType.AGENTS:
+            if type == SectionType.ROLES:
                 sections_titles = CustomOS.getenv("AGENTS_SECTIONS").split(",")
             else:
                 sections_titles = CustomOS.getenv("SUMMARIZER_SECTIONS").split(",")
@@ -98,12 +75,11 @@ class SectionManager(BaseManager):
         self, sections: list[Section]
     ) -> tuple[list[Section], list[Section]]:
         assert all(
-            section.type == SectionType.AGENTS for section in sections
+            section.type == SectionType.ROLES for section in sections
         ), logger.critical("Not all sections are of type AGENTS")
 
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
-            shared_section_titles = CustomOS.getenv("SHARED_SECTIONS")
-            shared_section_titles = shared_section_titles.split(",")
+            shared_section_titles = CustomOS.getenv("SHARED_SECTIONS").split(",")
         else:
             choices = [section.title for section in sorted(sections)]
             shared_section_titles = self.input_m.select_multiple(

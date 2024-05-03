@@ -11,7 +11,7 @@ class PlaceholderType(Enum):
 
 
 class SectionType(Enum):
-    AGENTS = "Agents"
+    ROLES = "Roles"
     PRIVATE = "Private"
     SHARED = "Shared"
     SUMMARIZER = "Summarizer"

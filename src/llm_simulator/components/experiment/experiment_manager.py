@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Union
 
@@ -44,14 +45,11 @@ class ExperimentManager(BaseManager):
     def create_experiment(self, creator: str) -> Experiment:
         logger.info("Setting up a new experiment")
 
-        if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
-            starting_message = "Start the experiment"
-        else:
-            starting_message = self._ask_for_starting_message()
+        starting_message = self._ask_for_starting_message()
 
         llms = self.llm_m.ask_for_llms()
 
-        agents_sections = self.section_m.ask_for_sections(type=SectionType.AGENTS)
+        agents_sections = self.section_m.ask_for_sections(type=SectionType.ROLES)
         shared_sections, private_sections = self.section_m.ask_shared_sections(
             agents_sections
         )
@@ -61,12 +59,8 @@ class ExperimentManager(BaseManager):
             type=SectionType.SUMMARIZER
         )
 
-        if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
-            favourite = False
-            note = ""
-        else:
-            favourite = self._ask_for_favourite()
-            note = self._ask_for_note()
+        favourite = self._ask_for_favourite()
+        note = self._ask_for_note()
 
         experiment = Experiment(
             starting_message=starting_message,
@@ -92,17 +86,20 @@ class ExperimentManager(BaseManager):
     def duplicate_and_update_experiment(
         self, experiment: Experiment
     ) -> Union[Experiment, None]:
-        changes = self.input_m.select_multiple(
-            message="Select the changes you want to make",
-            choices=[
-                "Starting message",  # ✅
-                "LLMs",  # ✅
-                "Agents",  # ✅
-                "Summarizer",  # ✅
-                "Note",  # ✅
-                "Favourite",  # ✅
-            ],
-        )
+        if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
+            changes = CustomOS.getenv("UPDATE_EXPERIMENT_CHOICES").split(",")
+        else:
+            changes = self.input_m.select_multiple(
+                message="Select the changes you want to make",
+                choices=[
+                    "Starting message",
+                    "LLMs",
+                    "Roles",
+                    "Summarizer",
+                    "Note",
+                    "Favourite",
+                ],
+            )
 
         if not changes:
             return None
@@ -111,15 +108,19 @@ class ExperimentManager(BaseManager):
             logger.info("Previous starting message: " + experiment.starting_message)
             experiment.starting_message = self._ask_for_starting_message()
         if "LLMs" in changes:
-            logger.info("Previous LLMs:\n" + str(experiment.llm_m))
-            llms = self._ask_for_llms()
-            experiment.llm_m = LLMManager(llms=llms)
-        if "Agents" in changes:
-            self._update_agents(experiment)
+            previous_llms = list(experiment.llms.values())
+            llms_str = "\n- ".join(str(llm) for llm in previous_llms)
+            logger.info(f"Previous LLMs:\n- {llms_str}")
+            llms = self.llm_m.ask_for_llms()
+            experiment.llms = {llm.name: llm for llm in llms}
+        if "Roles" in changes:
+            self._update_roles(experiment)
         if "Summarizer" in changes:
             self._update_summarizer(experiment)
         if "Note" in changes:
-            logger.info("Previous note: " + experiment.note)
+            logger.info(
+                "Previous note: " + experiment.note if experiment.note else "EMPTY"
+            )
             experiment.note = self._ask_for_note()
         if "Favourite" in changes:
             experiment.favourite = not experiment.favourite
@@ -151,94 +152,77 @@ class ExperimentManager(BaseManager):
         )
         return experiments[selected_id]
 
-    def _update_agents(self, experiment: Experiment) -> None:
-        section_type = SectionType.AGENTS
-        logger.info(f"Updating the {section_type} section")
+    def _update_roles(self, experiment: Experiment) -> None:
+        section_type = SectionType.ROLES
+        logger.info(f"Updating the [{section_type.value}] sections")
 
-        changes = self.input_m.select_multiple(
-            message="Select the changes you want to make",
-            choices=[
-                "Roles",
-                "Agents section titles",
-                "Agents section contents",
-            ],
-        )
-        old_private_sections = self._get_private_sections(experiment)
+        if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
+            changes = CustomOS.getenv("UPDATE_ROLES_CHOICES").split(",")
+        else:
+            changes = self.input_m.select_multiple(
+                message="Select the changes you want to make",
+                choices=[
+                    "Roles",
+                    "Roles section titles",
+                    "Roles section contents",
+                ],
+            )
 
         if "Roles" in changes:
-            logger.warning(
-                "1. The new roles will be appended to the existing one\n"
-                + "2. The roles that are not reinserted will be deleted.\n"
+            new_roles = self.role_m.ask_for_updated_roles(old_roles=experiment.roles)
+            experiment.roles = {role.name: role for role in new_roles}
+
+        if "Roles section titles" in changes:
+            old_private_sections_copy = self.role_m.get_private_sections_copy(
+                experiment.roles
             )
-            old_role_names = list(experiment.agent_m.roles.keys())
-
-            logger.info("Previous roles: " + ", ".join(old_role_names))
-            new_roles = self._ask_for_roles(old_private_sections)
-            new_role_names = [role.name for role in new_roles]
-
-            for old_role_name in old_role_names:
-                if old_role_name not in new_role_names:
-                    del experiment.agent_m.roles[old_role_name]
-
-            for new_role in new_roles:
-                if new_role.name not in old_role_names:
-                    experiment.agent_m.roles[new_role.name] = new_role
-
-        old_shared_sections = list(experiment.agent_m.shared_sections.values())
-        old_sections = sorted(old_private_sections + old_shared_sections)
-
-        if "Agents section titles" in changes:
-            logger.warning(
-                "1. The new sections will be appended to the existing one, using the new order\n"
-                + "2. The sections that are not reinserted will be deleted.\n"
-                + "3. If a section changes from shared to private (or viceversa), you will be asked to insert the new content\n"
+            old_private_sections_copy = {
+                section.title: section for section in old_private_sections_copy
+            }
+            old_shared_sections_copy = deepcopy(experiment.shared_sections)
+            old_sections_copy = {
+                **old_private_sections_copy,
+                **old_shared_sections_copy,
+            }
+            new_sections = self.section_m.ask_for_updated_sections(
+                old_sections=old_sections_copy, type=section_type
             )
-            old_section_titles = [
-                (
-                    section.title
-                    if section.type == SectionType.PRIVATE
-                    else f"{section.title} (SHARED)"
-                )
-                for section in old_sections
-            ]
-            logger.info(
-                f"Previous {section_type.value} sections: "
-                + ", ".join(old_section_titles[1:])
-            )
-            new_sections = self._ask_for_sections(type=section_type)
-            new_shared_sections, new_private_sections = self.split_sections(
-                new_sections
+            new_shared_sections, new_private_sections = (
+                self.section_m.ask_shared_sections(new_sections)
             )
 
-            experiment.agent_m.shared_sections = {
+            # Add previous content - shared sections
+            for section in new_shared_sections:
+                if section.title in old_shared_sections_copy.keys():
+                    old_section = old_shared_sections_copy[section.title]
+                    section.content = old_section.content
+            experiment.shared_sections = {
                 section.title: section for section in new_shared_sections
             }
-            for role in experiment.agent_m.roles.values():
-                role.sections = {
-                    section.title: section for section in new_private_sections
+
+            # Add previous content - private sections
+            for role in experiment.roles.values():
+                new_sections = deepcopy(new_private_sections)
+                old_sections = role.sections
+                for section in new_sections:
+                    section.role = role.name
+                    section.type = SectionType.PRIVATE
+                    if section.title in old_sections.keys():
+                        section.content = old_sections[section.title].content
+                experiment.roles[role.name].sections = {
+                    section.title: section for section in new_sections
                 }
 
-            # Add previous contents
-            for section in old_sections:
-                if section.title in experiment.agent_m.shared_sections.keys():
-                    experiment.agent_m.shared_sections[section.title].content = (
-                        section.content
-                    )
-                else:
-                    for role in experiment.agent_m.roles.values():
-                        if section.title in role.sections.keys():
-                            role.sections[section.title].content = section.content
-
-        if "Agents section contents" in changes:
-            private_sections = self._get_private_sections(experiment)
-            shared_sections = list(experiment.agent_m.shared_sections.values())
+        if "Roles section contents" in changes:
+            private_sections = self.role_m.get_private_sections_copy(experiment.roles)
+            shared_sections = list(experiment.shared_sections.values())
             sections = private_sections + shared_sections
             sections_to_reset = self.input_m.select_multiple(
                 message="Select the sections you want to reset the content",
                 choices=[section.title for section in sorted(sections)],
             )
 
-            for role in experiment.agent_m.roles.values():
+            for role in experiment.roles.values():
                 for section in role.sections.values():
                     if section.title in sections_to_reset:
                         section.content = ""
@@ -247,81 +231,76 @@ class ExperimentManager(BaseManager):
                 if section.title in sections_to_reset:
                     section.content = ""
 
-        experiment.agent_m.ask_contents_empty_sections()
+        self._ask_contents_empty_sections(experiment)
 
     def _update_summarizer(self, experiment: Experiment) -> None:
-        section_type = SectionType.AGENTS
+        section_type = SectionType.SUMMARIZER
         logger.info(f"Updating the {section_type} section")
 
-        changes = self.input_m.select_multiple(
-            message="Select the changes you want to make",
-            choices=[
-                "Summarizer sections titles",
-                "Summarizer sections contents",
-            ],
-        )
-
-        if "Summarizer sections titles" in changes:
-            logger.instruction(
-                "1. the new sections will be appended to the existing one, using the new order\n"
-                + "2. the sections that are not reinserted will be deleted.\n"
-            )
-            old_summarizer_sections = list(
-                experiment.agent_m.summarizer_sections.values()
-            )
-            old_summarizer_section_titles = [
-                section.title for section in old_summarizer_sections
-            ]
-            logger.info(
-                f"Previous {SectionType.SUMMARIZER.value} sections: "
-                + ", ".join(old_summarizer_section_titles[1:])
-            )
-            new_summarizer_sections = self._ask_for_sections(
-                type=SectionType.SUMMARIZER
-            )
-
-            experiment.agent_m.summarizer_sections = {
-                section.title: section for section in new_summarizer_sections
-            }
-
-            # Add previous contents
-            for section in old_summarizer_sections:
-                if section.title in experiment.agent_m.summarizer_sections.keys():
-                    experiment.agent_m.summarizer_sections[section.title].content = (
-                        section.content
-                    )
-
-        if "Summarizer sections contents" in changes:
-            summarizer_sections = experiment.agent_m.summarizer_sections
-            sections_to_reset = self.input_m.select_multiple(
-                message="Select the sections you want to reset the content",
+        if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
+            changes = CustomOS.getenv("UPDATE_SUMMARIZER_CHOICES").split(",")
+        else:
+            changes = self.input_m.select_multiple(
+                message="Select the changes you want to make",
                 choices=[
-                    section.title for section in sorted(summarizer_sections.values())
+                    "Summarizer sections titles",
+                    "Summarizer sections contents",
                 ],
             )
-            for section in sections_to_reset:
-                summarizer_sections[section].content = ""
 
-        experiment.agent_m.ask_contents_empty_sections()
+        if "Summarizer sections titles" in changes:
+            old_sections_copy = deepcopy(experiment.summarizer_sections)
+            new_sections = self.section_m.ask_for_updated_sections(
+                old_sections=old_sections_copy, type=section_type
+            )
 
-    def _get_private_sections(self, experiment: Experiment) -> list[Section]:
-        return list(next(iter(experiment.agent_m.roles.values())).sections.values())
+            # Add previous content
+            for section in new_sections:
+                if section.title in old_sections_copy.keys():
+                    section.content = old_sections_copy[section.title].content
+            experiment.summarizer_sections = {
+                section.title: section for section in new_sections
+            }
+
+        if "Summarizer sections contents" in changes:
+            summarizer_sections = list(experiment.summarizer_sections.values())
+            sections_to_reset = self.input_m.select_multiple(
+                message="Select the sections you want to reset the content",
+                choices=[section.title for section in sorted(summarizer_sections)],
+            )
+            for section in experiment.summarizer_sections.values():
+                if section.title in sections_to_reset:
+                    section.content = ""
+
+        self._ask_contents_empty_sections(experiment)
 
     def _ask_for_starting_message(self, optional: bool = False) -> str:
-        return self.input_m.input_str(
-            "Enter the conversation starting message (e.g. Start the experiment)",
-            optional=optional,
-        )
+        if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
+            starting_message = "Start the experiment"
+        else:
+            starting_message = self.input_m.input_str(
+                "Enter the conversation starting message (e.g. Start the experiment)",
+                optional=optional,
+            )
+        return starting_message
 
     def _ask_for_note(self) -> str:
-        return self.input_m.input_str(
-            "Enter a note for the experiment (optional)", optional=True
-        )
+        if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
+            note = "Note test"
+        else:
+            note = self.input_m.input_str(
+                "Enter a note for the experiment (optional)", optional=True
+            )
+        return note
 
     def _ask_for_favourite(self) -> bool:
-        return self.input_m.confirm(
-            "Do you want to mark this experiment with a ⭐ for finding it more easily?"
-        )
+        if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
+            favourite = True
+        else:
+            favourite = self.input_m.confirm(
+                "Do you want to mark this experiment with a ⭐ for finding it more easily?"
+            )
+        return favourite
 
     def _ask_contents_empty_sections(
         self,

@@ -3,7 +3,11 @@ from dataclasses import dataclass, field
 from bson.objectid import ObjectId
 from itakello_logging import ItakelloLogging
 from pymongo.database import Database
-from pymongo.errors import ConfigurationError, OperationFailure
+from pymongo.errors import (
+    ConfigurationError,
+    OperationFailure,
+    ServerSelectionTimeoutError,
+)
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
@@ -43,10 +47,14 @@ class DatabaseManager(BaseManager):
                 username = self.input_m.input_str("Enter your MongoDB username")
                 password = self.input_m.password("Enter your MongoDB password")
                 cluster_url = self.input_m.input_str("Enter your MongoDB cluster URL")
-            client = MongoClient(
-                f"mongodb+srv://{username}:{password}@{cluster_url}/",
-                server_api=ServerApi("1"),
-            )
+            try:
+                client = MongoClient(
+                    f"mongodb+srv://{username}:{password}@{cluster_url}/",
+                    server_api=ServerApi("1"),
+                )
+            except Exception as e:
+                logger.critical(f"Client error: {e}")
+                raise e
             connected = self._check_connection(client)
         if client == None:
             logger.error("MongoDB client not created")
@@ -64,6 +72,14 @@ class DatabaseManager(BaseManager):
             return False
         except OperationFailure:
             logger.error("Authentication failed")
+            return False
+        except ServerSelectionTimeoutError:
+            logger.critical(
+                "Connection timeout. Ask the DB administrator to add your IP to the whitelist"
+            )
+            return False
+        except Exception as e:
+            logger.error(f"Connection error: {e}")
             return False
 
     def _select_database(self, client: MongoClient) -> None:
