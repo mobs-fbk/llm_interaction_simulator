@@ -1,7 +1,10 @@
 from dataclasses import dataclass
+from typing import cast
 
 from autogen import Agent, GroupChat
 from itakello_logging import ItakelloLogging
+
+from .agent import CustomAgent
 
 logger = ItakelloLogging().get_logger(__name__)
 
@@ -11,7 +14,7 @@ class Chat(GroupChat):
 
     def __init__(
         self,
-        agents: list[Agent],
+        agents: list[CustomAgent],
         selection_method: str = "auto",
         round_number: int = 10,
     ) -> None:
@@ -22,7 +25,7 @@ class Chat(GroupChat):
             "round_robin",
         ), logger.error(f"Invalid mode [{selection_method}]")
         super().__init__(
-            agents=agents,
+            agents=cast(list[Agent], agents),
             messages=[],  # no messages to start
             speaker_selection_method=selection_method,
             allow_repeat_speaker=False,

@@ -13,8 +13,8 @@ from pymongo.server_api import ServerApi
 
 from ..abstracts import BaseManager
 from ..components.conversation.conversation import Conversation
+from ..components.conversation.message import Message
 from ..components.experiment.experiment import Experiment
-from ..components.message.message import Message
 from ..utility.consts import DEFAULT_DATABASE, DEV_MODE
 from ..utility.custom_os import CustomOS
 from .input_manager import InputManager
@@ -152,23 +152,26 @@ class DatabaseManager(BaseManager):
         logger.debug(f"Conversation updated with ID: {conversation.id}")
 
     def save_conversation(
-        self, experiment: Experiment, conversation: Conversation
+        self,
+        experiment: Experiment,
+        conversation: Conversation,
+        messages: list[Message],
     ) -> ObjectId:
-        for message in conversation.messages_ids:
-            if isinstance(message, Message):
-                message.id = self._save_message(message)
-            else:
-                logger.error(f"Invalid message type: {type(message)}")
+        conversation.messages_ids = self._save_messages(messages)
         conversation_id = self.db.conversations.insert_one(
             conversation.to_document()
         ).inserted_id
+        experiment.conversation_ids.append(conversation_id)
+        self.update_experiment(experiment)
         logger.debug(f"Conversation saved with ID: {conversation_id}")
         return conversation_id
 
-    def _save_message(self, message: Message) -> ObjectId:
-        message_id = self.db.messages.insert_one(message.to_document()).inserted_id
-        logger.debug(f"Message saved with ID: {message_id}")
-        return message_id
+    def _save_messages(self, messages: list[Message]) -> list[ObjectId]:
+        documents = [message.to_document() for message in messages]
+        result = self.db.messages.insert_many(documents)
+        message_ids = result.inserted_ids
+        logger.debug(f"Messages saved with IDs: {message_ids}")
+        return message_ids
 
     def add_conversation(self, experiment_id: ObjectId, conversation: ObjectId) -> None:
         self.db.experiments.update_one(
@@ -180,16 +183,15 @@ class DatabaseManager(BaseManager):
     def delete_experiment(self, experiment: Experiment) -> None:
         # Delete the conversations and messages associated with the experiment
         for conversation_id in experiment.conversation_ids:
-            conversation = self.db.conversations.find_one({"_id": conversation_id})
-            for message in conversation["messages"]:  # type: ignore
-                self.db.messages.delete_one({"_id": message})
+            conversation_doc = self.db.conversations.find_one({"_id": conversation_id})
+            conversation = Conversation.from_document(conversation_doc)
+            self.db.messages.delete_many({"_id": {"$in": conversation.messages_ids}})
             self.db.conversations.delete_one({"_id": conversation_id})
             logger.debug(f"Deleted conversation with ID: {conversation_id}")
         self.db.experiments.delete_one({"_id": experiment.id})
         logger.debug(f"Deleted experiment with ID: {experiment.id}")
 
-    def delete_conversation(self, conversation: dict) -> None:
-        for message in conversation["messages"]:
-            self.db.messages.delete_one({"_id": message})
-        self.db.conversations.delete_one({"_id": conversation["_id"]})
-        logger.debug(f"Deleted conversation with ID: {conversation['_id']}")
+    def delete_conversation(self, conversation: Conversation) -> None:
+        self.db.messages.delete_many({"_id": {"$in": conversation.messages_ids}})
+        self.db.conversations.delete_one({"_id": conversation.id})
+        logger.debug(f"Deleted conversation with ID: {conversation.id}")

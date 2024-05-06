@@ -57,7 +57,7 @@ class Section(MongoModel):
     def __str__(self) -> str:
         output = f"{self.content}\n"
         if self.title != "Starting prompt":
-            output = f"##{self.title}\n\n" + output
+            output = f"## {self.title}\n\n" + output
         return output
 
     def __lt__(self, other: "Section") -> bool:

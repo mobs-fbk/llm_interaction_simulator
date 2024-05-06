@@ -5,7 +5,6 @@ from llm_simulator.components.conversation.conversation_manager import (
     ConversationManager,
 )
 from llm_simulator.components.experiment.experiment_manager import ExperimentManager
-from llm_simulator.components.message.message_manager import MessageManager
 from llm_simulator.core.action_manager import ActionManager
 from llm_simulator.core.database_manager import DatabaseManager
 from llm_simulator.core.input_manager import InputManager
@@ -22,7 +21,6 @@ def main() -> None:
 
     experiment_m = ExperimentManager(input_m=input_m, db_m=db_m)
     conversation_m = ConversationManager(input_m=input_m, db_m=db_m)
-    message_m = MessageManager(input_m=input_m, db_m=db_m)
 
     while True:
         action = action_m.select_initial_action()
@@ -35,13 +33,13 @@ def main() -> None:
                 continue
         else:  # Exit the application
             break
-        logger.info(f"\nSelected experiment:\n\n{experiment}")
+        logger.info(f"\nSelected experiment:\n\n{experiment.to_contents()}")
         while True:
             action = action_m.select_experiment_action()
-            if action == "Perform new conversations":  # ⚒️
+            if action == "Perform new conversations":  # ✅
                 conversation_m.perform_conversations(experiment)
                 continue
-            elif action == "Duplicate and update experiment":  # ⚒️
+            elif action == "Duplicate and update experiment":  # ✅
                 experiment = experiment_m.duplicate_and_update_experiment(experiment)
                 if experiment != None:
                     logger.info(f"\nUpdated experiment:\n\n{experiment}")
@@ -50,7 +48,7 @@ def main() -> None:
                 conversation = conversation_m.select_conversation(experiment)
                 if conversation == None:
                     logger.warning(
-                        "No conversations available for this experiment. Plese perform new ones."
+                        "No conversations available for this experiment. Please perform new ones."
                     )
                     continue
             elif action == "Delete experiment":  # ✅
@@ -65,15 +63,16 @@ def main() -> None:
                 continue
             else:  # Go back
                 break
+            logger.info(f"\nSelected conversation:\n\n{conversation.to_content()}")
             while True:
-                """action = action_m.select_conversation_action()
-                if action == "View conversation":  # ❌
-                    # ui_m.view_conversation(conversation_dict)
+                action = action_m.select_conversation_action()
+                if action == "View conversation":  # ✅
+                    conversation_m.view_conversation(conversation)
                     pass
-                elif action == "Update conversation":  # ❌
-                    # ui_m.update_conversation(conversation_dict)
+                elif action == "Set as favourite":  # ✅
+                    conversation_m.toggle_favourite(conversation)
                     pass
-                elif action == "Delete conversation":  # ❌
+                elif action == "Delete conversation":  # ✅
                     if conversation.creator != db_m.username:
                         logger.warning(
                             "You are not the creator of this conversation. You cannot delete it."
@@ -85,13 +84,13 @@ def main() -> None:
                         conversation_m.delete_conversation(experiment, conversation)
                     break
                 else:  # Go back
-                    break"""
+                    break
 
 
 if __name__ == "__main__":
     load_dotenv()
     ItakelloLogging(
-        debug=CustomOS.getenv("APP_MODE", "") == "development",
+        debug=False,
         excluded_modules=[
             "docker.utils.config",
             "docker.auth",

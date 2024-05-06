@@ -71,7 +71,7 @@ class SectionManager(BaseManager):
         ]
         return sections
 
-    def ask_shared_sections(
+    def ask_for_shared_sections(
         self, sections: list[Section]
     ) -> tuple[list[Section], list[Section]]:
         assert all(
@@ -98,7 +98,7 @@ class SectionManager(BaseManager):
                 private_sections.append(section)
         return shared_sections, private_sections
 
-    def ask_content(self, section: Section) -> set[str]:
+    def ask_for_content(self, section: Section) -> set[str]:
         message = f"Enter the content for the [{section.type.value}] [{section.title}] section"
         if section.type == SectionType.PRIVATE:
             assert section.role, logger.error("Private section without role")
@@ -134,32 +134,3 @@ class SectionManager(BaseManager):
             current_combination.append((nums[index][0], i))
             self.generate_combinations(nums, current_combination, index + 1, result)
             current_combination.pop()
-
-    def list_combinations(
-        self, nums: list[tuple[str, int]]
-    ) -> list[list[tuple[str, int]]]:
-        result = []
-        self.generate_combinations(nums, [], 0, result)
-        return result
-
-    def compose_placeholders(
-        self, agent_combination: list[tuple[str, int]]
-    ) -> dict[str, str]:
-        placeholders = {}
-        total_agents = 0
-        for role, num in agent_combination:
-            total_agents += num
-            for placeholder in self.roles[role].placeholders.values():
-                placeholders[placeholder.tag] = placeholder.to_value(num)
-        for placeholder in self.placeholders.values():
-            if placeholder.role == "roles":
-                placeholders[placeholder.tag] = placeholder.to_value(
-                    len(agent_combination)
-                )
-
-            elif placeholder.role == "agents":
-                placeholders[placeholder.tag] = placeholder.to_value(total_agents)
-            else:
-                logger.error(f"Invalid placeholder role: {placeholder.role}")
-                exit()
-        return placeholders

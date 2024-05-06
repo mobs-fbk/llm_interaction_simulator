@@ -6,8 +6,6 @@ from itakello_logging import ItakelloLogging
 
 from ...abstracts.mongo_model import MongoModel
 from ...utility.consts import TIME_FORMAT
-from ..conversation.agent import Agent
-from ..conversation.conversation import Conversation
 from ..llm.llm import LLM
 from ..placeholder.placeholder import Placeholder
 from ..role.role import Role
@@ -60,14 +58,7 @@ class Experiment(MongoModel):
         self.placeholders = {
             placeholder.tag: placeholder for placeholder in placeholders_list
         }
-        logger.debug(
-            "Created new experiment with:\n"
-            + f"- {len(self.roles)} roles\n"
-            + f"- {len(self.llms)} LLMs\n"
-            + f"- {len(self.shared_sections)} shared sections\n"
-            + f"- {len(self.summarizer_sections)} summarizer sections\n"
-            + f"- {len(self.placeholders)} placeholders\n"
-        )
+        logger.debug(f"Created new Experiment:\n{self}")
 
     def _create_starting_placeholders(self) -> list[Placeholder]:
         return [
@@ -122,7 +113,14 @@ class Experiment(MongoModel):
         }
 
     def to_selection(self) -> str:
-        selection = f"{self.id}\tNumber of conversations: {len(self.conversation_ids)}\tCreator: {self.creator} [{self.creation_date.strftime(TIME_FORMAT)}]"
+        roles = ", ".join(role.name for role in self.roles.values())
+        llms = ", ".join(llm.model for llm in self.llms.values())
+        selection = (
+            f"Number of conversations: {len(self.conversation_ids)}\t"
+            + f"Creator: {self.creator} [{self.creation_date.strftime(TIME_FORMAT)}]\t"
+            + f"Roles: {roles}\t"
+            + f"LLMs: {llms}\t"
+        )
         if self.favourite:
             selection += " ⭐"
         if self.note:
@@ -130,6 +128,17 @@ class Experiment(MongoModel):
         return selection
 
     def __str__(self) -> str:
+        output = (
+            f"- ID: {self.id}\n"
+            + f"- roles: {len(self.roles)}\n"
+            + f"- LLMs: {len(self.llms)}\n"
+            + f"- shared sections: {len(self.shared_sections)}\n"
+            + f"- summarizer sections: {len(self.summarizer_sections)}\n"
+            + f"- placeholders: {len(self.placeholders)}\n"
+        )
+        return output
+
+    def to_contents(self) -> str:
         llms = "\n- ".join(str(llm) for llm in self.llms.values())
         roles = "\n".join(str(role) for role in self.roles.values())
         shared_sections = "\n".join(
@@ -152,7 +161,7 @@ class Experiment(MongoModel):
             + f"\033[1mNote\033[0m: {self.note}\n\n"
             + f"\033[1mFavourite\033[0m: {self.favourite}\n\n"
             + f"\033[1mCreator\033[0m: {self.creator}\n\n"
-            + f"\033[1mNumber of conversations\033[0m: {len(self.conversation_ids)}\n"
+            + f"\033[1mNumber of conversations\033[0m: {len(self.conversation_ids)}\n\n"
             + f"\033[1mCreation date\033[0m: {self.creation_date.strftime(TIME_FORMAT)}\n\n"
         )
 
@@ -172,3 +181,25 @@ class Experiment(MongoModel):
                 placeholder for placeholder in self.placeholders.values()
             ],
         )
+
+    def compose_placeholders(
+        self, agent_combination: list[tuple[str, int]]
+    ) -> dict[str, str]:
+        placeholders = {}
+        total_agents = 0
+        for role, num in agent_combination:
+            total_agents += num
+            for placeholder in self.roles[role].placeholders.values():
+                placeholders[placeholder.tag] = placeholder.to_value(num)
+        for placeholder in self.placeholders.values():
+            if placeholder.role == "roles":
+                placeholders[placeholder.tag] = placeholder.to_value(
+                    len(agent_combination)
+                )
+
+            elif placeholder.role == "agents":
+                placeholders[placeholder.tag] = placeholder.to_value(total_agents)
+            else:
+                logger.error(f"Invalid placeholder role: {placeholder.role}")
+                exit()
+        return placeholders

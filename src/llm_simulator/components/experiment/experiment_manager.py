@@ -50,7 +50,7 @@ class ExperimentManager(BaseManager):
         llms = self.llm_m.ask_for_llms()
 
         agents_sections = self.section_m.ask_for_sections(type=SectionType.ROLES)
-        shared_sections, private_sections = self.section_m.ask_shared_sections(
+        shared_sections, private_sections = self.section_m.ask_for_shared_sections(
             agents_sections
         )
         roles = self.role_m.ask_for_roles(private_sections)
@@ -188,7 +188,7 @@ class ExperimentManager(BaseManager):
                 old_sections=old_sections_copy, type=section_type
             )
             new_shared_sections, new_private_sections = (
-                self.section_m.ask_shared_sections(new_sections)
+                self.section_m.ask_for_shared_sections(new_sections)
             )
 
             # Add previous content - shared sections
@@ -298,7 +298,7 @@ class ExperimentManager(BaseManager):
             favourite = True
         else:
             favourite = self.input_m.confirm(
-                "Do you want to mark this experiment with a ⭐ for finding it more easily?"
+                message="Do you want to mark this experiment as importat?"
             )
         return favourite
 
@@ -331,8 +331,8 @@ class ExperimentManager(BaseManager):
         for section in sorted(empty_sections):
             invalid_placeholders = True
             while invalid_placeholders:
-                input_placeholders = self.section_m.ask_content(section)
-                invalid_placeholders = self.add_missing_placeholders(
+                input_placeholders = self.section_m.ask_for_content(section)
+                invalid_placeholders = self._add_missing_placeholders(
                     experiment=experiment, input_placeholders=input_placeholders
                 )
                 if invalid_placeholders:
@@ -343,7 +343,7 @@ class ExperimentManager(BaseManager):
                         + "Please try again."
                     )
 
-    def add_missing_placeholders(
+    def _add_missing_placeholders(
         self, experiment: Experiment, input_placeholders: set[str]
     ) -> bool:
         curr_placeholders = set()

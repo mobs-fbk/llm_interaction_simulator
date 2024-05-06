@@ -45,7 +45,7 @@ class ActionManager(BaseManager):
     def select_conversation_action(self) -> str:
         choices = [
             "View conversation",
-            "Update conversation",
+            "Set as favourite",
             "Delete conversation",
             "Go back",
         ]

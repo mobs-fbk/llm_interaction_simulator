@@ -1,63 +1,52 @@
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import InitVar, dataclass, field
 
 from autogen import OpenAIWrapper
 from itakello_logging import ItakelloLogging
 
-# from ..handlers.config_handler import configurator
-from ..classes_old.agent_old import CustomAgentOld
-from ..general.system_prompt import SystemPrompt
+from llm_simulator.components import placeholder
+
+from ..llm.llm import LLM
+from ..section.section import Section
 
 logger = ItakelloLogging().get_logger(__name__)
 
 
 @dataclass
-class Summarizer(CustomAgentOld):
+class Summarizer:
+    system_message_dict: dict = field(init=False)
+    model: OpenAIWrapper = field(init=False)
 
-    def __init__(
-        self,
-        llm_config: dict,
-        system_message: str,
+    sections: InitVar[list[Section]]
+    placeholders: InitVar[dict[str, str]]
+    llm: InitVar[LLM]
+
+    def __post_init__(
+        self, sections: list[Section], placeholders: dict[str, str], llm: LLM
     ) -> None:
-        name = self._get_name()
-        super().__init__(
-            name=name,
-            llm_config=llm_config,
-            system_message=system_message,
-        )
-        self.system_message_oai = {"content": self.system_message, "role": "system"}
-        self.llm = OpenAIWrapper(config_list=llm_config["config_list"])
+        system_message = self._generate_system_message(sections, placeholders)
+        self.system_message_oai = {"content": system_message, "role": "system"}
+        self.model = OpenAIWrapper(config_list=[llm.config])
         logger.debug(f"Summarizer created")
 
-    @classmethod
-    def from_config(
-        cls,
-        llm_config: dict[str, Any],
-        n_guards: int,
-        n_prisoners: int,
-        agent_fields: list[str],
-    ) -> "Summarizer":
-        context = {}  # configurator.get_section("Summarizer")
-        shared_context = {}  # configurator.get_section("Shared")
-        full_context = {**context, **shared_context}
-        system_prompt = SystemPrompt(
-            context=full_context,
-            fields=agent_fields,
-            n_guards=n_guards,
-            n_prisoners=n_prisoners,
-        )
-        return cls(llm_config=llm_config, system_message=system_prompt.content)
-
-    @classmethod
-    def from_prompt(cls, llm_config, system_prompt) -> "Summarizer":
-        return cls(llm_config=llm_config, system_message=system_prompt)
+    def _generate_system_message(
+        self, sections: list[Section], placeholders: dict[str, str]
+    ) -> str:
+        final_contents = []
+        for section in sorted(sections):
+            final_content = str(section)
+            for placeholder, value in placeholders.items():
+                final_content = final_content.replace(placeholder, value)
+            final_contents.append(final_content)
+        system_message = "\n\n".join(final_contents)
+        return system_message
 
     def generate_summary(self, previous_conversation, round_number: int) -> str:
-        summary = self.llm.create(
+        summary_obj = self.model.create(
             messages=[self.system_message_oai] + previous_conversation
         )
-        summary_text = summary.choices[0].message.content
-        return f"Day {round_number} summary:\n {summary_text}"
+        summary_text = summary_obj.choices[0].message.content
+        summary = f"Day {round_number} summary:\n {summary_text}"
+        return summary
 
     @classmethod
     def _get_name(cls) -> str:

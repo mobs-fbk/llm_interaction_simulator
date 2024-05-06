@@ -45,7 +45,7 @@ class LLMManager(BaseManager):
                 logger.error(e)
         if CustomOS.getenv("APP_MODE") == "development":
             set_parameters = CustomOS.getenv("SET_PARAMETERS")
-            set_parameters = set_parameters == "True"
+            set_parameters = True if set_parameters == "y" else False
         else:
             set_parameters = self.input_m.confirm(
                 "Do you want to set the parameters for the LLMs?"
