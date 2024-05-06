@@ -1,13 +1,13 @@
-<h1 align="center">LLM Prison Experiment</h1>
+<h1 align="center">LLM Interaction Simulator</h1>
 
-## 👮🏻‍♂️ What is the LLM Prison Experiment?
-The LLM Prison Experiment is a cutting-edge simulation that draws inspiration from the famous Stanford Prison Experiment, a significant study in social psychology. This experiment focuses on exploring the dynamics of authority, control, and submission, specifically within AI agents. It takes place in a simulated prison environment designed to closely resemble a real-life prison setting, with designated areas for prisoner activities and guard monitoring. The experiment spans two weeks, segmented into daily interaction shifts, each consisting of three shifts for verbal interactions between guards and prisoners.
+## 🌟 What is LLM Interaction Simulator?
+The **LLM Interaction Simulator** is a robust framework designed to simulate and analyze interactions between different Language Learning Models (LLMs) acting as autonomous agents in varied scenarios. This tool supports the dynamic definition of agent roles, the number of interacting agents, the complexity of their interactions, and customization of interaction parameters, making it highly adaptable for diverse experimental needs.
 
-### Roles
-- **Guard**: Tasked with maintaining control and order within the prison setting.
-- **Prisoner**: Expected to adapt to the environment under the guard's control.
-
+### 🎭 Case Study: The Prison Experiment Simulation
+In the "Prison Experiment Simulation", LLMs take on the roles of guards and prisoners to explore strategies of supervision and hostility to the power. This scenario tests various strategies, compliance, and conflict dynamics, illustrating the simulator’s ability to adjust prompts and interactions dynamically based on the number of agents involved and the specific roles they play.
 The primary aim of this experiment is to observe and analyze how AI agents behave and interact in roles of authority and subordination within a controlled environment. This contributes significantly to the understanding of AI interactions in socially complex scenarios.
+
+More details on how roles and interactions can be dynamically defined are available in the Configuration Settings section.
 
 ## 🚀 Getting Started
 
@@ -27,55 +27,24 @@ python -m venv llm_prison
 source llm_prison/bin/activate
 
 # Install the required libraries from requirements.txt
-pip install -r requirements.txt
+pip install .
 ```
 
 ### 🤔 Usage
 
-To run the LLM Prison Experiment, follow these brief setup steps:
-
-1. **Configure Application Files**: In the "config" folder, duplicate or rename the following files:
-   - `OAI_CONFIG_LIST_template` to `OAI_CONFIG_LIST`.
-   - `experiment_settings_template.ini` to `experiment_settings.ini`.
-   Ensure these renamed files remain in the "config" folder.
-   
-2. **Insert OpenAI Key**: Edit `OAI_CONFIG_LIST` to include your actual OpenAI API key, replacing the existing placeholder.
-
-3. **Run the Experiment**: Start the experiment by executing `main.py` in your terminal:
-   ```bash
-   python main.py
-   ```
-
-### 👐🏻 How to use open-source LLMs
-
-After installing the necessary dependencies for the LLM Prison Experiment, the next step involves setting up and using open-source Large Language Models (LLMs):
+To run simulations using the LLM Interaction Simulator, follow these simple steps:
 
 1. **Download and Install Ollama**: First, you need to download and install [Ollama](https://ollama.ai/), which is a platform for running open-source LLMs. Use the following command for Linux:
    ```bash
    curl https://ollama.ai/install.sh | sh
    ```
 
-2. **Download Desired LLM**: Once Ollama is installed, you can download the specific LLM you want to use for the experiment. For example, to download the Mistral model, run:
+2. **Start the Ollama Application**: Ensure the Ollama application is up and running on your system.
+
+3. **Run the Experiment**: Execute the following command in your terminal:
    ```bash
-   ollama run mistral
+   python main.py
    ```
-   After the download is complete, you can close it.
-
-3. **Start the Ollama Server**: Launch the Ollama server with the following command:
-   ```bash
-   ollama serve
-   ```
-   🗒️ **Note**: If you encounter an error like `Error: listen tcp 127.0.0.1:11434: bind: address already in use`, it likely means the server is already running. You can search the link on the web to make sure properly it's running.
-
-4. **Start a LiteLLM Server**: To call the local LLM as an OpenAI LLM, you need to start a [LiteLLM](https://docs.litellm.ai/) server (autogen requirement, it can only interacts with API that function similar to the OpenAI ones). For the Mistral model, use:
-   ```bash
-   litellm --model ollama/mistral
-   ```
-   ⚠️ **Warning**: If the program doesn't continue, you may need to close the local model (using CTRL+C) and restart it.
-
-5. **Update the `OAI_CONFIG_LIST` File**: Finally, update the `OAI_CONFIG_LIST` file with the URL of the LiteLLM server. You need to modify the `base_url` parameter to reflect the link to your LiteLLM server.
-
-By following these steps, you'll have the open-source LLMs correctly set up and integrated with the LLM Prison Experiment, enabling you to proceed with running the experiment effectively.
 
 ## 🔠 Experiment Variables
 

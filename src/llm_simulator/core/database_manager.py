@@ -53,8 +53,8 @@ class DatabaseManager(BaseManager):
                     server_api=ServerApi("1"),
                 )
             except Exception as e:
-                logger.critical(f"Client error: {e}")
-                raise e
+                logger.critical(f"{e}")
+                continue
             connected = self._check_connection(client)
         if client == None:
             logger.error("MongoDB client not created")
@@ -184,7 +184,7 @@ class DatabaseManager(BaseManager):
         # Delete the conversations and messages associated with the experiment
         for conversation_id in experiment.conversation_ids:
             conversation_doc = self.db.conversations.find_one({"_id": conversation_id})
-            conversation = Conversation.from_document(conversation_doc)
+            conversation = Conversation.from_document(conversation_doc)  # type: ignore
             self.db.messages.delete_many({"_id": {"$in": conversation.messages_ids}})
             self.db.conversations.delete_one({"_id": conversation_id})
             logger.debug(f"Deleted conversation with ID: {conversation_id}")

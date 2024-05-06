@@ -5,7 +5,7 @@ from typing import Any
 class MongoModel(ABC):
 
     @abstractmethod
-    def to_document(self) -> dict:
+    def to_document(self) -> dict | str:
         """
         Converts the object to a dictionary representation.
 

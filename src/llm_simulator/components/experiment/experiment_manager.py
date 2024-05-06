@@ -1,6 +1,5 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Union
 
 import httpx
 from itakello_logging import ItakelloLogging
@@ -83,9 +82,34 @@ class ExperimentManager(BaseManager):
     def delete_experiment(self, experiment: Experiment) -> None:
         self.db_m.delete_experiment(experiment)
 
+    def update_experiment(self, experiment: Experiment) -> Experiment | None:
+        changes = self.input_m.select_multiple(
+            message="Select the changes you want to make",
+            choices=[
+                "Note",
+                "Favourite",
+            ],
+        )
+        if not changes:
+            return None
+
+        if "Note" in changes:
+            logger.info(
+                "Previous note: " + experiment.note if experiment.note else "EMPTY"
+            )
+            experiment.note = self._ask_for_note()
+        if "Favourite" in changes:
+            experiment.favourite = not experiment.favourite
+
+        self.db_m.update_experiment(experiment=experiment)
+
+        logger.confirmation("Experiment updated successfully.")
+
+        return experiment
+
     def duplicate_and_update_experiment(
         self, experiment: Experiment
-    ) -> Union[Experiment, None]:
+    ) -> Experiment | None:
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
             changes = CustomOS.getenv("UPDATE_EXPERIMENT_CHOICES").split(",")
         else:
@@ -96,8 +120,6 @@ class ExperimentManager(BaseManager):
                     "LLMs",
                     "Roles",
                     "Summarizer",
-                    "Note",
-                    "Favourite",
                 ],
             )
 
@@ -117,13 +139,6 @@ class ExperimentManager(BaseManager):
             self._update_roles(experiment)
         if "Summarizer" in changes:
             self._update_summarizer(experiment)
-        if "Note" in changes:
-            logger.info(
-                "Previous note: " + experiment.note if experiment.note else "EMPTY"
-            )
-            experiment.note = self._ask_for_note()
-        if "Favourite" in changes:
-            experiment.favourite = not experiment.favourite
 
         experiment = experiment.duplicate(creator=self.db_m.username)
 
@@ -133,7 +148,7 @@ class ExperimentManager(BaseManager):
 
         return experiment
 
-    def select_experiment(self) -> Union[Experiment, None]:
+    def select_experiment(self) -> Experiment | None:
         try:
             experiments = self.db_m.get_experiments()
         except httpx.ConnectError:
@@ -225,11 +240,11 @@ class ExperimentManager(BaseManager):
             for role in experiment.roles.values():
                 for section in role.sections.values():
                     if section.title in sections_to_reset:
-                        section.content = ""
+                        section.to_reset = True
 
             for section in shared_sections:
                 if section.title in sections_to_reset:
-                    section.content = ""
+                    section.to_reset = True
 
         self._ask_contents_empty_sections(experiment)
 
@@ -270,7 +285,7 @@ class ExperimentManager(BaseManager):
             )
             for section in experiment.summarizer_sections.values():
                 if section.title in sections_to_reset:
-                    section.content = ""
+                    section.to_reset = True
 
         self._ask_contents_empty_sections(experiment)
 
@@ -314,7 +329,7 @@ class ExperimentManager(BaseManager):
 
         empty_sections = []
         for section in full_sections:
-            if not section.content:
+            if not section.content or section.to_reset:
                 empty_sections.append(section)
 
         if not empty_sections:
@@ -331,6 +346,8 @@ class ExperimentManager(BaseManager):
         for section in sorted(empty_sections):
             invalid_placeholders = True
             while invalid_placeholders:
+                if section.to_reset:
+                    logger.info("Previous content: " + section.content)
                 input_placeholders = self.section_m.ask_for_content(section)
                 invalid_placeholders = self._add_missing_placeholders(
                     experiment=experiment, input_placeholders=input_placeholders

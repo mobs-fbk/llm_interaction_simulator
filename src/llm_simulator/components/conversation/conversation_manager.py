@@ -43,17 +43,18 @@ class ConversationManager(BaseManager):
         total_conversations = (
             n_conversations * len(llms) * len(days_list) * len(agent_combinations)
         )
-
+        index_conv = 1
         for llm in llms:
             for days in days_list:
                 for agent_combination in agent_combinations:
-                    for index in range(n_conversations):
+                    for _ in range(n_conversations):
                         logger.info(
-                            f"--- Performing conversation [{index + 1}/{total_conversations}] ---\n"
+                            f"--- Performing conversation [{index_conv}/{total_conversations}] ---\n"
                         )
+                        index_conv += 1
                         conv_llm = experiment.llms[llm]
                         logger.info(
-                            f"\033[1mLLM\033[0m: {conv_llm}\n\033[1mDays\033[0m: {days}\n\033[1mAgents\033[0m: {agent_combination}"
+                            f"\033[1mLLM\033[0m: {conv_llm}\n\033[1mDays\033[0m: {days}\n\033[1mAgents\033[0m: {agent_combination}\n"
                         )
                         conversation = Conversation(
                             n_messages=total_messages,

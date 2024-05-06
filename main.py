@@ -44,6 +44,13 @@ def main() -> None:
                 if experiment != None:
                     logger.info(f"\nUpdated experiment:\n\n{experiment}")
                 break
+            elif action == "Update experiment (Favourites and Notes)":  # ✅
+                if experiment.creator != db_m.username:
+                    logger.warning(
+                        "You are not the creator of this experiment. You cannot modify it."
+                    )
+                    continue
+                experiment = experiment_m.update_experiment(experiment)
             elif action == "Select old conversations":  # ✅
                 conversation = conversation_m.select_conversation(experiment)
                 if conversation == None:
