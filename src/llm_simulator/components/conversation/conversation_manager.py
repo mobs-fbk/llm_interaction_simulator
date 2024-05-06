@@ -218,11 +218,12 @@ class ConversationManager(BaseManager):
         max_nums = 1
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
             agent_max_nums = CustomOS.getenv("AGENT_NUMS").split(",")
+            agent_max_nums = [int(num) for num in agent_max_nums]
             assert len(agent_max_nums) == len(available_roles)
             agent_combinations = [
-                (role.name, int(num))
-                for role, num in zip(available_roles, agent_max_nums)
+                (role.name, num) for role, num in zip(available_roles, agent_max_nums)
             ]
+            max_nums = max(agent_max_nums)
         else:
             for role in available_roles:
                 max_num = self.input_m.input_int(

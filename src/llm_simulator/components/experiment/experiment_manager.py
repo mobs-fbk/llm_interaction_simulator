@@ -82,7 +82,7 @@ class ExperimentManager(BaseManager):
     def delete_experiment(self, experiment: Experiment) -> None:
         self.db_m.delete_experiment(experiment)
 
-    def update_experiment(self, experiment: Experiment) -> Experiment | None:
+    def update_experiment(self, experiment: Experiment) -> None:
         changes = self.input_m.select_multiple(
             message="Select the changes you want to make",
             choices=[
@@ -105,11 +105,7 @@ class ExperimentManager(BaseManager):
 
         logger.confirmation("Experiment updated successfully.")
 
-        return experiment
-
-    def duplicate_and_update_experiment(
-        self, experiment: Experiment
-    ) -> Experiment | None:
+    def duplicate_and_update_experiment(self, experiment: Experiment) -> None:
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
             changes = CustomOS.getenv("UPDATE_EXPERIMENT_CHOICES").split(",")
         else:
@@ -124,7 +120,7 @@ class ExperimentManager(BaseManager):
             )
 
         if not changes:
-            return None
+            return
 
         if "Starting message" in changes:
             logger.info("Previous starting message: " + experiment.starting_message)
@@ -145,8 +141,6 @@ class ExperimentManager(BaseManager):
         self.db_m.save_experiment(experiment)
 
         logger.confirmation("Experiment duplicated and updated successfully.")
-
-        return experiment
 
     def select_experiment(self) -> Experiment | None:
         try:

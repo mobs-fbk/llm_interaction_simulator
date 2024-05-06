@@ -40,9 +40,11 @@ def main() -> None:
                 conversation_m.perform_conversations(experiment)
                 continue
             elif action == "Duplicate and update experiment":  # ✅
-                experiment = experiment_m.duplicate_and_update_experiment(experiment)
+                experiment_m.duplicate_and_update_experiment(experiment)
                 if experiment != None:
-                    logger.info(f"\nUpdated experiment:\n\n{experiment}")
+                    logger.info(
+                        f"\nDuplicated and updated experiment:\n\n{experiment.to_contents()}"
+                    )
                 break
             elif action == "Update experiment (Favourites and Notes)":  # ✅
                 if experiment.creator != db_m.username:
@@ -50,7 +52,8 @@ def main() -> None:
                         "You are not the creator of this experiment. You cannot modify it."
                     )
                     continue
-                experiment = experiment_m.update_experiment(experiment)
+                experiment_m.update_experiment(experiment)
+                continue
             elif action == "Select old conversations":  # ✅
                 conversation = conversation_m.select_conversation(experiment)
                 if conversation == None:
@@ -77,8 +80,13 @@ def main() -> None:
                     conversation_m.view_conversation(conversation)
                     pass
                 elif action == "Set as favourite":  # ✅
+                    if experiment.creator != db_m.username:
+                        logger.warning(
+                            "You are not the creator of this conversastion. You cannot modify it."
+                        )
+                        continue
                     conversation_m.toggle_favourite(conversation)
-                    pass
+                    continue
                 elif action == "Delete conversation":  # ✅
                     if conversation.creator != db_m.username:
                         logger.warning(
@@ -89,7 +97,7 @@ def main() -> None:
                         "Are you sure you want to delete this conversation?"
                     ):
                         conversation_m.delete_conversation(experiment, conversation)
-                    break
+                        break
                 else:  # Go back
                     break
 

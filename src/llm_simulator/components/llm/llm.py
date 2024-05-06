@@ -32,6 +32,7 @@ class LLM(MongoModel):
             "model": self.name,
             "base_url": "http://localhost:11434/v1",
             "api_key": "ollama",
+            "cache_seed": None,
         }
         logger.debug(f"Created a new LLM instance: {self.model}")
 
@@ -61,14 +62,14 @@ class LLM(MongoModel):
             # Initialize the progress bar upon receiving the total size
             if "total" in update and pbar is None:
                 pbar = tqdm(
-                    total=update["total"],  # / 1e9,
-                    bar_format="{l_bar}{bar}| {n:.3f}/{total:.3f} {unit} [elapsed: {elapsed}<{remaining}, {rate_fmt}{postfix}]",
+                    total=update["total"] / 1e9,
+                    bar_format="{l_bar}{bar}| {n:.3f}/{total:.3f} {unit} [elapsed: {elapsed}]",
                     unit="GB",
                     colour="green",
                 )
             # Update the progress bar based on the 'completed' bytes
             if pbar is not None and "completed" in update:
-                pbar.n = update["completed"]  # / 1e9
+                pbar.n = update["completed"] / 1e9
                 pbar.refresh()
 
         if pbar is not None:

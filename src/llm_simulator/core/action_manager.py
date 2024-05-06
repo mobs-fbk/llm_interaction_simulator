@@ -30,6 +30,7 @@ class ActionManager(BaseManager):
         choices = [
             "Perform new conversations",
             "Duplicate and update experiment",
+            "Update experiment (Favourites and Notes)",
             "Select old conversations",
             "Delete experiment",
             "Go back",
