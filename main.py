@@ -1,14 +1,14 @@
 from dotenv import load_dotenv
 from itakello_logging import ItakelloLogging
 
-from llm_simulator.components.conversation.conversation_manager import (
+from src.llm_simulator.components.conversation.conversation_manager import (
     ConversationManager,
 )
-from llm_simulator.components.experiment.experiment_manager import ExperimentManager
-from llm_simulator.core.action_manager import ActionManager
-from llm_simulator.core.database_manager import DatabaseManager
-from llm_simulator.core.input_manager import InputManager
-from llm_simulator.utility.custom_os import CustomOS
+from src.llm_simulator.components.experiment.experiment_manager import ExperimentManager
+from src.llm_simulator.core.action_manager import ActionManager
+from src.llm_simulator.core.database_manager import DatabaseManager
+from src.llm_simulator.core.input_manager import InputManager
+from src.llm_simulator.utility.custom_os import CustomOS
 
 logger = ItakelloLogging.get_logger(__name__)
 
