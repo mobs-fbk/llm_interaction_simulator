@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Union
 
-import inquirer
 import inquirer3
 from inquirer3.render.console import ConsoleRender
 from inquirer3.themes import GreenPassion
