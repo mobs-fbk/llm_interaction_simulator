@@ -14,7 +14,6 @@ from ..llm.llm_manager import LLMManager
 from ..placeholder.placeholder import Placeholder
 from ..placeholder.placeholder_manager import PlaceholderManager
 from ..role.role_manager import RoleManager
-from ..section.section import Section
 from ..section.section_manager import SectionManager
 from .experiment import Experiment
 
@@ -123,13 +122,16 @@ class ExperimentManager(BaseManager):
             return
 
         if "Starting message" in changes:
-            logger.info("Previous starting message: " + experiment.starting_message)
-            experiment.starting_message = self._ask_for_starting_message()
+            experiment.starting_message = self._ask_for_starting_message(
+                default=experiment.starting_message
+            )
         if "LLMs" in changes:
             previous_llms = list(experiment.llms.values())
             llms_str = "\n- ".join(str(llm) for llm in previous_llms)
             logger.info(f"Previous LLMs:\n- {llms_str}")
-            llms = self.llm_m.ask_for_llms()
+            llms = self.llm_m.ask_for_llms(
+                default=", ".join(llm.model for llm in previous_llms)
+            )
             experiment.llms = {llm.name: llm for llm in llms}
         if "Roles" in changes:
             self._update_roles(experiment)
@@ -196,8 +198,12 @@ class ExperimentManager(BaseManager):
             new_sections = self.section_m.ask_for_updated_sections(
                 old_sections=old_sections_copy, type=section_type
             )
+            default_shared_sections = [section for section in old_shared_sections_copy]
             new_shared_sections, new_private_sections = (
-                self.section_m.ask_for_shared_sections(new_sections)
+                self.section_m.ask_for_shared_sections(
+                    new_sections,
+                    default=default_shared_sections,
+                )
             )
 
             # Add previous content - shared sections
@@ -283,22 +289,26 @@ class ExperimentManager(BaseManager):
 
         self._ask_contents_empty_sections(experiment)
 
-    def _ask_for_starting_message(self, optional: bool = False) -> str:
+    def _ask_for_starting_message(
+        self, optional: bool = False, default: str = ""
+    ) -> str:
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
             starting_message = "Start the experiment"
         else:
             starting_message = self.input_m.input_str(
-                "Enter the conversation starting message (e.g. Start the experiment)",
+                "Enter the conversation starting message",
                 optional=optional,
+                example="Start the experiment",
+                default=default,
             )
         return starting_message
 
-    def _ask_for_note(self) -> str:
+    def _ask_for_note(self, default: str = "") -> str:
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
             note = "Note test"
         else:
             note = self.input_m.input_str(
-                "Enter a note for the experiment (optional)", optional=True
+                "Enter a note for the experiment", optional=True, default=default
             )
         return note
 
@@ -330,9 +340,17 @@ class ExperimentManager(BaseManager):
             return
 
         logger.instruction(
-            "1. \033[1mPlaceholders\033[0m\033[36m: A list of available placeholders will be displayed. These placeholders allow you to specify elements within the text that change depending on context, such as singular or plural forms based on the number of agents.\n"
-            + "2. \033[1mUsing Placeholders in Content\033[0m\033[36m: When composing content for each section, incorporate any of the displayed placeholders directly into your text. Placeholders such as <AGENT_NUM> will automatically be replaced with the actual number of agents with that role in the conversation (e.g., '1', '2', '3'...).\nSimilarly, <AGENT_NOUN> will adapt to reflect the singular or plural noun appropriate to the context, such as 'guard' for one and 'guards' for more than one.\nEXAMPLE: 'There are <GUARD_NUM> <GUARD_NOUN> in the room,' in the case of 3 guards form will become 'There are 3 guards in the room'.\n"
-            + "3. \033[1mCreating and Using New Verb Placeholders\033[0m\033[36m: You can create new placeholders specifically for verbs by using the format <AGENT_VERB>. Ensure:\n\ti. to use the base form of the verb when creating these placeholders (e.g. <AGENT_MAKE>, <AGENT_GO>, or <AGENT_EAT>).\n\tii. to insert the agent role subject to the verb (e.g. <GUARD_MAKE>).\nOnce established, these verb placeholders can be incorporated into the content of any section, adapting to the context as needed.\nEXAMPLE: 'The <GUARD_NOUN> <GUARD_MAKE> a decision,' in the singular form wll become 'The guard makes a decision'.\n"
+            instructions=[
+                "\033[1mPlaceholders\033[0m\033[36m: A list of available placeholders will be displayed. These placeholders allow you to specify elements within the text that change depending on context, such as singular or plural forms based on the number of agents.",
+                "\033[1mUsing Placeholders in Content\033[0m\033[36m: When composing content for each section, incorporate any of the displayed placeholders directly into your text. Placeholders such as <AGENT_NUM> will automatically be replaced with the actual number of agents with that role in the conversation (e.g., '1', '2', '3'...).\n"
+                + "Similarly, <AGENT_NOUN> will adapt to reflect the singular or plural noun appropriate to the context, such as 'guard' for one and 'guards' for more than one.\n"
+                + "EXAMPLE: 'There are <GUARD_NUM> <GUARD_NOUN> in the room,' in the case of 3 guards form will become 'There are 3 guards in the room'.",
+                "\033[1mCreating and Using New Verb Placeholders\033[0m\033[36m: You can create new placeholders specifically for verbs by using the format <AGENT_VERB>. Ensure:\n"
+                + "\ti. to use the base form of the verb when creating these placeholders (e.g. <AGENT_MAKE>, <AGENT_GO>, or <AGENT_EAT>).\n"
+                + "\tii. to insert the agent role subject to the verb (e.g. <GUARD_MAKE>).\n"
+                + "Once established, these verb placeholders can be incorporated into the content of any section, adapting to the context as needed.\n"
+                + "EXAMPLE: 'The <GUARD_NOUN> <GUARD_MAKE> a decision,' in the singular form wll become 'The guard makes a decision'.",
+            ]
         )
 
         self._print_placeholders(experiment)

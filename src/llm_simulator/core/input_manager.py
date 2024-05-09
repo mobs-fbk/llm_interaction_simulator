@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Union
 
 import inquirer3
 from inquirer3.render.console import ConsoleRender
@@ -23,6 +22,8 @@ class InputManager(BaseManager):
         logger.debug(f"Message: {message}")
         user_input = inquirer3.confirm(message, render=self.render)
         logger.debug(f"Input: {user_input}")
+        if type(user_input) != bool:
+            raise ValueError("Invalid input. Please enter a boolean value.")
         return user_input
 
     def input_int(
@@ -31,12 +32,13 @@ class InputManager(BaseManager):
         max_value: int = 0,
         positive_requirement: bool = False,
         even_requirement: bool = False,
+        default: str = "",
     ) -> int:
         logger.debug(f"Message: {message}")
         correct = False
         user_input = 0
         while not correct:
-            user_input = inquirer3.text(message, render=self.render)
+            user_input = inquirer3.text(message, render=self.render, default=default)
             try:
                 user_input = int(user_input)
             except ValueError:
@@ -53,16 +55,22 @@ class InputManager(BaseManager):
             else:
                 correct = True
         logger.debug(f"Input: {user_input}")
+        if type(user_input) != int:
+            raise ValueError("Invalid input. Please enter an integer.")
         return user_input
 
     def input_float(
-        self, message: str, positive_requirement: bool = False, max_value: float = 0
+        self,
+        message: str,
+        positive_requirement: bool = False,
+        max_value: float = 0,
+        default: str = "",
     ) -> float:
         logger.debug(f"Message: {message}")
         correct = False
         user_input = 0.0
         while not correct:
-            user_input = inquirer3.text(message, render=self.render)
+            user_input = inquirer3.text(message, render=self.render, default=default)
             try:
                 user_input = float(user_input)
             except ValueError:
@@ -77,6 +85,8 @@ class InputManager(BaseManager):
             else:
                 correct = True
         logger.debug(f"Input: {user_input}")
+        if type(user_input) != float:
+            raise ValueError("Invalid input. Please enter a float.")
         return user_input
 
     def input_str(
@@ -84,14 +94,17 @@ class InputManager(BaseManager):
         message: str,
         optional: bool = False,
         example: str = "",
+        default: str = "",
     ) -> str:
         logger.debug(f"Message: {message}")
         correct = False
         user_input = ""
         while not correct:
+            if optional:
+                message += " [optional]"
             if example:
                 message += f" (e.g. {example})"
-            user_input = inquirer3.text(message, render=self.render)
+            user_input = inquirer3.text(message, render=self.render, default=default)
             if not optional and not user_input:
                 logger.error("Invalid input. Please enter a value.")
             else:
@@ -105,6 +118,7 @@ class InputManager(BaseManager):
         optional: bool = False,
         example: str = "",
         avoid_duplicates: bool = True,
+        default: str = "",
     ) -> list[str]:
         message += " [comma-separated list]"
         if example:
@@ -113,7 +127,7 @@ class InputManager(BaseManager):
         correct = False
         items = []
         while not correct:
-            user_input = inquirer3.text(message, render=self.render)
+            user_input = inquirer3.text(message, render=self.render, default=default)
             items = [item.strip() for item in user_input.split(",")]
             if avoid_duplicates and len(set(items)) != len(items):
                 logger.error("Invalid input. Please ensure all items are different.")
@@ -146,13 +160,18 @@ class InputManager(BaseManager):
         return user_input
 
     def select_multiple(
-        self, message: str, choices: list[str] | list[tuple[str, str]]
+        self,
+        message: str,
+        choices: list[str] | list[tuple[str, str]],
+        default: list[str] = [],
     ) -> list[str]:
         logger.debug(f"Message: {message}")
         user_input = inquirer3.checkbox(
-            message=message, choices=choices, render=self.render
+            message=message, choices=choices, render=self.render, default=default
         )
         logger.debug(f"Input: {user_input}")
+        if type(user_input) != list:
+            raise ValueError("Invalid input. Please enter a list.")
         return user_input
 
     def password(self, message: str) -> str:

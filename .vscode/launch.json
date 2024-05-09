@@ -20,7 +20,7 @@
             "module": "${file}",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "justMyCode": true
+            "justMyCode": false
         }
     ]
 }

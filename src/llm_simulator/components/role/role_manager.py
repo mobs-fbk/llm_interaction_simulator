@@ -20,7 +20,9 @@ class RoleManager(BaseManager):
     section_m: SectionManager
     placeholder_m: PlaceholderManager
 
-    def ask_for_roles(self, private_sections: list[Section]) -> list[Role]:
+    def ask_for_roles(
+        self, private_sections: list[Section], default="guard, prisoner"
+    ) -> list[Role]:
         assert all(
             section.type == SectionType.PRIVATE for section in private_sections
         ), logger.critical(
@@ -30,7 +32,7 @@ class RoleManager(BaseManager):
             roles_names = CustomOS.getenv("ROLES").split(",")
         else:
             roles_names = self.input_m.input_list(
-                "Enter the agent roles", example="guard, prisoner"
+                "Enter the agent roles", example="guard, prisoner", default=default
             )
         roles = []
         for name in roles_names:
@@ -46,14 +48,17 @@ class RoleManager(BaseManager):
 
     def ask_for_updated_roles(self, old_roles: dict[str, Role]) -> list[Role]:
         logger.instruction(
-            "1. The new roles will be appended to the existing one\n"
-            + "2. The roles that are not reinserted will be deleted.\n"
+            instructions=[
+                "The new roles will be appended to the existing one",
+                "The roles that are not reinserted will be deleted",
+            ]
         )
-        logger.info("Previous roles: " + ", ".join(old_roles.keys()))
 
         old_private_sections_copy = self.get_private_sections_copy(old_roles)
 
-        new_roles = self.ask_for_roles(old_private_sections_copy)
+        new_roles = self.ask_for_roles(
+            old_private_sections_copy, default=", ".join(old_roles.keys())
+        )
         for role in new_roles:
             if role.name in old_roles:
                 role.sections = old_roles[role.name].sections

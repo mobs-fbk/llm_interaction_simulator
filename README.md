@@ -27,7 +27,7 @@ python -m venv llm_interaction_simulator
 source llm_interaction_simulator/bin/activate
 
 # Install the required libraries from requirements.txt
-pip install .
+pip install -e .
 ```
 
 ### 🤔 Usage

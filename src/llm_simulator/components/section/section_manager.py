@@ -24,35 +24,35 @@ class SectionManager(BaseManager):
         old_sections: dict[str, Section],
         type: Literal[SectionType.SUMMARIZER, SectionType.ROLES],
     ) -> list[Section]:
-        instructions = (
-            "1. The new sections will be appended to the existing one, using the new order\n"
-            + "2. The sections that are not reinserted will be deleted.\n"
-        )
+        instructions = [
+            "The new sections will be appended to the existing one, using the new order"
+            + "The sections that are not reinserted will be deleted"
+        ]
+
         if type == SectionType.ROLES:
-            instructions += "3. If a section changes from shared to private (or viceversa), you will be asked to insert the new content\n"
+            instructions.append(
+                "If a section changes from shared to private (or viceversa), you will be asked to insert the new content"
+            )
         logger.instruction(instructions)
 
-        old_sections_titles = [
-            (
-                section.title
-                if section.type == SectionType.PRIVATE
-                or section.type == SectionType.SUMMARIZER
-                else f"{section.title} (SHARED)"
-            )
-            for section in old_sections.values()
-        ]
-        logger.info("Previous sections: " + ", ".join(old_sections_titles[1:]))
+        old_sections_titles = [section.title for section in old_sections.values()]
 
-        new_sections = self.ask_for_sections(type=type)
+        new_sections = self.ask_for_sections(
+            type=type, default=",".join(old_sections_titles)
+        )
         return new_sections
 
     def ask_for_sections(
-        self, type: Literal[SectionType.SUMMARIZER, SectionType.ROLES]
+        self,
+        type: Literal[SectionType.SUMMARIZER, SectionType.ROLES],
+        default: str = "goal, personality, communication_rules",
     ) -> list[Section]:
         logger.instruction(
-            "1. The sections will be ordered by the order you insert them\n"
-            + "2. A 'Starting prompt' section without title will be dynamically added to the prompt\n"
-            + f"3. The inserted sections will be used only for the {type.value}\n"
+            instructions=[
+                "The sections will be ordered by the order you insert them",
+                "A 'Starting prompt' section without title will be dynamically added to the prompt",
+                f"The inserted sections will be used only for the {type.value}",
+            ]
         )
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
             if type == SectionType.ROLES:
@@ -63,6 +63,7 @@ class SectionManager(BaseManager):
             sections_titles = self.input_m.input_list(
                 f"Enter the {type.value.upper()} section titles:",
                 example="goal, personality, communication_rules, ...",
+                default=default,
             )
         sections_titles.insert(0, "starting_prompt")
         sections = [
@@ -72,7 +73,7 @@ class SectionManager(BaseManager):
         return sections
 
     def ask_for_shared_sections(
-        self, sections: list[Section]
+        self, sections: list[Section], default: list[str] = []
     ) -> tuple[list[Section], list[Section]]:
         assert all(
             section.type == SectionType.ROLES for section in sections
@@ -85,6 +86,7 @@ class SectionManager(BaseManager):
             shared_section_titles = self.input_m.select_multiple(
                 message="Select shared sections between the agents",
                 choices=choices,
+                default=default,
             )
 
         shared_sections = []
@@ -98,7 +100,7 @@ class SectionManager(BaseManager):
                 private_sections.append(section)
         return shared_sections, private_sections
 
-    def ask_for_content(self, section: Section) -> set[str]:
+    def ask_for_content(self, section: Section, default: str = "") -> set[str]:
         message = f"Enter the content for the [{section.type.value}] [{section.title}] section"
         if section.type == SectionType.PRIVATE:
             assert section.role, logger.error("Private section without role")
@@ -106,7 +108,7 @@ class SectionManager(BaseManager):
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
             content = CustomOS.getenv("AGENTS_CONTENT")
         else:
-            content = self.input_m.input_str(message)
+            content = self.input_m.input_str(message, default=default)
         new_placeholders = section.set_content(content)
         return new_placeholders
 

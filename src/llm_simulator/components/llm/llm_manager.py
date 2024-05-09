@@ -16,10 +16,14 @@ logger = ItakelloLogging().get_logger(__name__)
 class LLMManager(BaseManager):
     input_m: InputManager
 
-    def ask_for_llms(self, optional: bool = False) -> list[LLM]:
+    def ask_for_llms(
+        self, optional: bool = False, default: str = "mistral, mistral, llama2"
+    ) -> list[LLM]:
         logger.instruction(
-            "1. To find the available LLMs -> https://ollama.com/library\n"
-            + "2. If you want to use the same LLM with different parameters (temperature, top_p and/or top_k) insert it multiple times\n"
+            instructions=[
+                "To find the available LLMs -> https://ollama.com/library",
+                "If you want to use the same LLM with different parameters (temperature, top_p and/or top_k) insert it multiple times",
+            ]
         )
         while True:
             if CustomOS.getenv("APP_MODE", "") == "development":
