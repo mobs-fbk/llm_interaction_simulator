@@ -233,7 +233,7 @@ class ExperimentManager(BaseManager):
             shared_sections = list(experiment.shared_sections.values())
             sections = private_sections + shared_sections
             sections_to_reset = self.input_m.select_multiple(
-                message="Select the sections you want to reset the content",
+                message="Select the sections you want to change the content",
                 choices=[section.title for section in sorted(sections)],
             )
 

@@ -31,10 +31,11 @@ class LLMManager(BaseManager):
                 llms_names = llms_names.split(",")
             else:
                 llms_names = self.input_m.input_list(
-                    message="Enter the LLMs to use:",
+                    message="Enter the LLMs to use",
                     example="mistral, mistral, llama2",
                     optional=optional,
                     avoid_duplicates=False,
+                    default=default,
                 )
             try:
                 llms = [LLM(model=name) for name in llms_names]

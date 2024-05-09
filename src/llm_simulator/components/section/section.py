@@ -18,7 +18,7 @@ class Section(MongoModel):
     role: str = ""
 
     def __post_init__(self) -> None:
-        self.title = self.title.replace("_", " ").capitalize()
+        self.title = self.title.strip().replace("_", " ").capitalize()
         self.content = self.content.strip()
         logger.debug(f"Created new section: {self.title}")
 

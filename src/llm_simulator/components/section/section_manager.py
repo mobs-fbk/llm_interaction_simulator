@@ -35,10 +35,11 @@ class SectionManager(BaseManager):
             )
         logger.instruction(instructions)
 
+        old_sections.pop("Starting prompt")
         old_sections_titles = [section.title for section in old_sections.values()]
 
         new_sections = self.ask_for_sections(
-            type=type, default=",".join(old_sections_titles)
+            type=type, default=", ".join(old_sections_titles)
         )
         return new_sections
 
@@ -100,7 +101,7 @@ class SectionManager(BaseManager):
                 private_sections.append(section)
         return shared_sections, private_sections
 
-    def ask_for_content(self, section: Section, default: str = "") -> set[str]:
+    def ask_for_content(self, section: Section) -> set[str]:
         message = f"Enter the content for the [{section.type.value}] [{section.title}] section"
         if section.type == SectionType.PRIVATE:
             assert section.role, logger.error("Private section without role")
@@ -108,6 +109,10 @@ class SectionManager(BaseManager):
         if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
             content = CustomOS.getenv("AGENTS_CONTENT")
         else:
+            if section.to_reset:
+                default = section.content
+            else:
+                default = ""
             content = self.input_m.input_str(message, default=default)
         new_placeholders = section.set_content(content)
         return new_placeholders
