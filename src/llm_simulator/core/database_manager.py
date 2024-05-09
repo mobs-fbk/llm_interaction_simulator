@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 
 from bson.objectid import ObjectId
@@ -38,15 +39,23 @@ class DatabaseManager(BaseManager):
         connected = False
         username = password = cluster_url = ""
         client = None
+        env_vars = {
+            "DB_USER": "Enter your MongoDB username",
+            "DB_PASSWORD": "Enter your MongoDB password",
+            "DB_CLUSTER_URL": "Enter your MongoDB cluster URL",
+        }
         while not connected:
-            if CustomOS.getenv("APP_MODE", "") == DEV_MODE:
-                username = CustomOS.getenv("DB_USER")
-                password = CustomOS.getenv("DB_PASSWORD")
-                cluster_url = CustomOS.getenv("DB_CLUSTER_URL")
-            else:
-                username = self.input_m.input_str("Enter your MongoDB username")
-                password = self.input_m.password("Enter your MongoDB password")
-                cluster_url = self.input_m.input_str("Enter your MongoDB cluster URL")
+            new_env_data = {}
+            for var, prompt in env_vars.items():
+                if var in os.environ:
+                    new_env_data[var] = os.environ[var]
+                else:
+                    new_env_data[var] = self.input_m.input_str(prompt)
+
+            username = new_env_data["DB_USER"]
+            password = new_env_data["DB_PASSWORD"]
+            cluster_url = new_env_data["DB_CLUSTER_URL"]
+
             try:
                 client = MongoClient(
                     f"mongodb+srv://{username}:{password}@{cluster_url}/",
@@ -56,11 +65,19 @@ class DatabaseManager(BaseManager):
                 logger.critical(f"{e}")
                 continue
             connected = self._check_connection(client)
+            if connected:
+            self._save_authentication(env_vars, new_env_data)
         if client == None:
             logger.error("MongoDB client not created")
             raise ValueError("MongoDB client not created")
         logger.debug(f"MongoDB client created with address [{client.address}].")
         return username, client
+
+    def _save_authentication(self, env_vars: dict, new_env_data: dict) -> None:
+        if any(var not in os.environ for var in env_vars):
+            with open(".env", "w") as f:
+                for var, value in new_env_data.items():
+                    f.write(f'{var}="{value}"\n')
 
     def _check_connection(self, client: MongoClient) -> bool:
         try:

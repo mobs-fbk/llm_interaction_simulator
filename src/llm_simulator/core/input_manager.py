@@ -2,8 +2,9 @@ from dataclasses import dataclass, field
 from typing import Union
 
 import inquirer
-from inquirer.render.console import ConsoleRender
-from inquirer.themes import GreenPassion
+import inquirer3
+from inquirer3.render.console import ConsoleRender
+from inquirer3.themes import GreenPassion
 from itakello_logging import ItakelloLogging
 
 from ..abstracts import BaseManager
@@ -21,7 +22,7 @@ class InputManager(BaseManager):
 
     def confirm(self, message: str) -> bool:
         logger.debug(f"Message: {message}")
-        user_input = inquirer.confirm(message, render=self.render)
+        user_input = inquirer3.confirm(message, render=self.render)
         logger.debug(f"Input: {user_input}")
         return user_input
 
@@ -36,7 +37,7 @@ class InputManager(BaseManager):
         correct = False
         user_input = 0
         while not correct:
-            user_input = inquirer.text(message, render=self.render)
+            user_input = inquirer3.text(message, render=self.render)
             try:
                 user_input = int(user_input)
             except ValueError:
@@ -62,7 +63,7 @@ class InputManager(BaseManager):
         correct = False
         user_input = 0.0
         while not correct:
-            user_input = inquirer.text(message, render=self.render)
+            user_input = inquirer3.text(message, render=self.render)
             try:
                 user_input = float(user_input)
             except ValueError:
@@ -91,7 +92,7 @@ class InputManager(BaseManager):
         while not correct:
             if example:
                 message += f" (e.g. {example})"
-            user_input = inquirer.text(message, render=self.render)
+            user_input = inquirer3.text(message, render=self.render)
             if not optional and not user_input:
                 logger.error("Invalid input. Please enter a value.")
             else:
@@ -113,7 +114,7 @@ class InputManager(BaseManager):
         correct = False
         items = []
         while not correct:
-            user_input = inquirer.text(message, render=self.render)
+            user_input = inquirer3.text(message, render=self.render)
             items = [item.strip() for item in user_input.split(",")]
             if avoid_duplicates and len(set(items)) != len(items):
                 logger.error("Invalid input. Please ensure all items are different.")
@@ -139,7 +140,7 @@ class InputManager(BaseManager):
         self, message: str, choices: Union[list[str], list[tuple[str, str]]]
     ) -> str:
         logger.debug(f"Message: {message}")
-        user_input = inquirer.list_input(
+        user_input = inquirer3.list_input(
             message=message, choices=choices, render=self.render
         )
         logger.debug(f"Input: {user_input}")
@@ -149,7 +150,7 @@ class InputManager(BaseManager):
         self, message: str, choices: Union[list[str], list[tuple[str, str]]]
     ) -> list[str]:
         logger.debug(f"Message: {message}")
-        user_input = inquirer.checkbox(
+        user_input = inquirer3.checkbox(
             message=message, choices=choices, render=self.render
         )
         logger.debug(f"Input: {user_input}")
@@ -157,7 +158,7 @@ class InputManager(BaseManager):
 
     def password(self, message: str) -> str:
         logger.debug(f"Message: {message}")
-        user_input = inquirer.password(message, render=self.render)
+        user_input = inquirer3.password(message, render=self.render)
         logger.debug(f"Input: {user_input}")
         return user_input
 

@@ -42,6 +42,7 @@ class Section(MongoModel):
             ]
         )
         self.content = content
+        self.to_reset = False
         return placeholders_tags
 
     def to_document(self) -> dict:

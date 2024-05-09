@@ -10,7 +10,7 @@ setup(
         "ollama",
         "itakello-logging",
         "pymongo",
-        "inquirer",
+        "inquirer3",
         "prompt_toolkit",
         "nltk",
         "inflect",
