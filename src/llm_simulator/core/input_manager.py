@@ -136,7 +136,7 @@ class InputManager(BaseManager):
         return items
 
     def select_one(
-        self, message: str, choices: Union[list[str], list[tuple[str, str]]]
+        self, message: str, choices: list[str] | list[tuple[str, str]]
     ) -> str:
         logger.debug(f"Message: {message}")
         user_input = inquirer3.list_input(
@@ -146,7 +146,7 @@ class InputManager(BaseManager):
         return user_input
 
     def select_multiple(
-        self, message: str, choices: Union[list[str], list[tuple[str, str]]]
+        self, message: str, choices: list[str] | list[tuple[str, str]]
     ) -> list[str]:
         logger.debug(f"Message: {message}")
         user_input = inquirer3.checkbox(

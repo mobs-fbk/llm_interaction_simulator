@@ -43,7 +43,7 @@ class LLMManager(BaseManager):
                 continue
             except ollama.ResponseError as e:
                 logger.error(e)
-        if CustomOS.getenv("APP_MODE") == "development":
+        if CustomOS.getenv("APP_MODE", "") == "development":
             set_parameters = CustomOS.getenv("SET_PARAMETERS")
             set_parameters = True if set_parameters == "y" else False
         else:
