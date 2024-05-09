@@ -66,7 +66,7 @@ class DatabaseManager(BaseManager):
                 continue
             connected = self._check_connection(client)
             if connected:
-            self._save_authentication(env_vars, new_env_data)
+                self._save_authentication(env_vars, new_env_data)
         if client == None:
             logger.error("MongoDB client not created")
             raise ValueError("MongoDB client not created")
@@ -77,7 +77,7 @@ class DatabaseManager(BaseManager):
         if any(var not in os.environ for var in env_vars):
             with open(".env", "w") as f:
                 for var, value in new_env_data.items():
-                    f.write(f'{var}="{value}"\n')
+                    f.write(f"{var}={value}\n")
 
     def _check_connection(self, client: MongoClient) -> bool:
         try:
