@@ -3,13 +3,11 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import Mapping
 
-import httpx
 import ollama
 from itakello_logging import ItakelloLogging
 from tqdm import tqdm
 
 from ...abstracts.mongo_model import MongoModel
-from ...core.input_manager import InputManager
 
 logger = ItakelloLogging().get_logger(__name__)
 
@@ -83,7 +81,11 @@ class LLM(MongoModel):
         await self.show_async_progress_tqdm(iterator)
 
     def create_custom_model(self) -> None:
-        curr_models = [model["name"] for model in ollama.list()["models"]]
+        available_models = ollama.list()["models"]
+        if not available_models:
+            curr_models = []
+        else:
+            curr_models = [model["name"] for model in available_models]
         if self.model not in curr_models:
             logger.warning(
                 f"Model [{self.model}] does not exist, pulling it. Please wait..."
