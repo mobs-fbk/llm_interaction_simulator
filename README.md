@@ -5,17 +5,17 @@ The **LLM Interaction Simulator** is a robust framework designed to simulate and
 
 ### 👮🏻 Case Study: The Prison Experiment Simulation
 In the "Prison Experiment Simulation", LLMs take on the roles of guards and prisoners to explore strategies of supervision and hostility to the power. This scenario tests various strategies, compliance, and conflict dynamics, illustrating the simulator’s ability to adjust prompts and interactions dynamically based on the number of agents involved and the specific roles they play.
-The primary aim of this experiment is to observe and analyze how AI agents behave and interact in roles of authority and subordination within a controlled environment. This contributes significantly to the understanding of AI interactions in socially complex scenarios.
-
-More details on how roles and interactions can be dynamically defined are available in the Configuration Settings section.
+The primary aim of this experiment is to observe and analyze how AI agents behave and interact in roles of authority and subordination within a controlled environment.
 
 ## 🚀 Getting Started
 
-To get started with the LLM Interaction Simulator, you need to set up the configuration and install necessary dependencies.
+To get started with the LLM Interaction Simulator, choose either a traditional virtual environment setup or a Docker-based setup based on your preference.
 
 ### 🛠️ Installation
 
-Before installing the project dependencies, you should create a virtual environment to keep your workspace clean and isolated. Follow these steps to set up the environment:
+#### Virtual Environment Setup
+
+Before installing the project dependencies, create a virtual environment to keep your workspace clean and isolated:
 
 ```bash
 # Create a Conda or virtual environment named 'llm_interaction_simulator'
@@ -28,25 +28,31 @@ source llm_interaction_simulator/bin/activate
 
 # Install the required libraries from requirements.txt
 pip install -e .
+
+# Download and install Ollama for open-source LLMs
+curl https://ollama.ai/install.sh | sh
 ```
+
+#### Docker Setup
+
+If you prefer to use Docker, which does not require installing Ollama on your system, follow these steps:
+
+```bash
+# Build and run the Docker container in detached mode
+docker compose up -d
+
+# Attach your command line interface to the running container
+docker attach <container_id>
+```
+Replace `<container_id>` with the actual ID of your Docker container. You can find it by running `docker ps`.
 
 ### 🤔 Usage
 
-To run simulations using the LLM Interaction Simulator, follow these simple steps:
+Whether you have set up a virtual environment or a Docker container, run the experiment using the following command in your terminal:
 
-1. **Download and Install Ollama**: First, you need to download and install [Ollama](https://ollama.ai/), which is a platform for running open-source LLMs. Use the following command for Linux:
-   ```bash
-   curl https://ollama.ai/install.sh | sh
-   ```
-
-2. **Start the Ollama Application**: Ensure the Ollama application is up and running on your system.
-
-3. **Run the Experiment**: Execute the following command in your terminal:
-   ```bash
-   python main.py
-   ```
-
-Here's how you might write the "MongoDB" section for your README file:
+```bash
+python main.py
+```
 
 ## 🌐 MongoDB
 
@@ -57,8 +63,6 @@ To store and manage the data for the LLM Interaction Simulator, the application 
 - **Cluster URL**: The URL of your MongoDB cluster.
 
 These credentials are used to configure the database connection settings within the simulator's environment. Ensure these details are kept secure and are not exposed in your code or version control.
-
-Here's how you could draft the "Hyperparameters" section for your README file:
 
 ## ⚙️ Hyperparameters
 
@@ -144,3 +148,16 @@ Below is a breakdown of how to the prompts are structured for the different comp
     Day 2 summary:
     "Guard_117 reminded Prisoner P-186 to follow instructions and maintain discipline, warning against disobedience. P-186 agreed to comply."
     ```
+
+## ✨ Features
+
+The LLM Interaction Simulator is equipped with a robust set of features designed to enhance your experience in running and managing LLM experiments:
+- **CLI Interface**: Utilize a user-friendly command-line interface to easily create and manage experiments and conversations between different LLMs.
+- **Integration with Ollama**: Seamlessly use and automatically download any LLM available on the Ollama platform, ensuring you have access to a wide range of machine learning models.
+- **Configurable LLM Settings**: Adjust key configuration variables such as `top_p`, `top_k`, and `temperature` to fine-tune the behavior of the LLMs during experiments.
+- **Logging System**: All actions and results are logged into a "logs" folder, providing a detailed record of your experiments for troubleshooting and analysis.
+- **MongoDB Connection**: Connect to a MongoDB database to store and retrieve experiment metadata and conversation data, enhancing data management and retrieval capabilities.
+- **Collaborative Experimentation**: Duplicate and modify experiments created by others, enabling collaborative development and iteration on experimental setups.
+- **Auto-Login Feature**: Experience streamlined access with auto-login when working on your own local PC, removing the need for repetitive authentication steps.
+- **Dynamic Role Prompts**: Automatically adjust role prompts based on the number of agents in the experiment, changing nouns, possessives, and numbers to match the context.
+- **Output Parsing**: Implement a specialized output parsing procedure to eliminate outputs that incorrectly continue across multiple roles, maintaining clarity and coherence in model responses.
