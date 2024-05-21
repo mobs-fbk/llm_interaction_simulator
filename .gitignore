@@ -1,6 +1,7 @@
 **/dist/
 **/build/
 **/logs/
+**/experiments/
 **/__pycache__/
 
 OAI_CONFIG_LIST

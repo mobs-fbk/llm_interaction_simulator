@@ -52,7 +52,6 @@ class Conversation(MongoModel):
         self,
         experiment: Experiment,
         placeholders: dict[str, str],
-        llm: LLM,
     ) -> list[CustomAgent]:
         agents = []
         full_roles = [f"{role.capitalize()}:" for role, _ in self.agent_combination]
@@ -65,7 +64,7 @@ class Conversation(MongoModel):
                         placeholders=placeholders,
                         sections=list(experiment.shared_sections.values())
                         + list(experiment.roles[role].sections.values()),
-                        llm=llm,
+                        llm=self.llm,
                     )
                 )
         return agents

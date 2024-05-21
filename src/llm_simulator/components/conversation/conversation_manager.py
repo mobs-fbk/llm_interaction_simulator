@@ -69,7 +69,7 @@ class ConversationManager(BaseManager):
                             agent_combination
                         )
                         conv_agents = conversation.generate_agents(
-                            experiment, placeholders, conv_llm
+                            experiment, placeholders
                         )
                         summarizer = Summarizer(
                             sections=list(experiment.summarizer_sections.values()),
