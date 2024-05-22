@@ -12,7 +12,7 @@ from pymongo.errors import (
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-from ..abstracts import BaseManager
+from ..interfaces import BaseManager
 from ..components.conversation.conversation import Conversation
 from ..components.conversation.message import Message
 from ..components.experiment.experiment import Experiment

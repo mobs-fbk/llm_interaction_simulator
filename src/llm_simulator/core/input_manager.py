@@ -5,7 +5,7 @@ from inquirer3.render.console import ConsoleRender
 from inquirer3.themes import GreenPassion
 from itakello_logging import ItakelloLogging
 
-from ..abstracts import BaseManager
+from ..interfaces import BaseManager
 
 logger = ItakelloLogging().get_logger(__name__)
 

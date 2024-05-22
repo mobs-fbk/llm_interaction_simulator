@@ -3,7 +3,7 @@ from pathlib import Path
 
 from itakello_logging import ItakelloLogging
 
-from ..abstracts import BaseManager
+from ..interfaces import BaseManager
 from ..components.conversation.conversation import Conversation
 from ..components.experiment.experiment import Experiment
 from ..utility.consts import OUTPUT_FOLDER

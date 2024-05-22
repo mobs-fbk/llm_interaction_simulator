@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from bson.objectid import ObjectId
 
-from ...abstracts.mongo_model import MongoModel
+from ...interfaces.mongo_model import MongoModel
 
 
 @dataclass

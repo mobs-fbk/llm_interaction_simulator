@@ -4,7 +4,7 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from itakello_logging import ItakelloLogging
 
-from ...abstracts.mongo_model import MongoModel
+from ...interfaces.mongo_model import MongoModel
 from ...utility.consts import TIME_FORMAT
 from ..llm.llm import LLM
 from ..placeholder.placeholder import Placeholder

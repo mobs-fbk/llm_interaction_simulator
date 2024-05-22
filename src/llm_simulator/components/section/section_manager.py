@@ -3,7 +3,7 @@ from typing import Any, Literal
 
 from itakello_logging import ItakelloLogging
 
-from ...abstracts import BaseManager
+from ...interfaces import BaseManager
 from ...core.input_manager import InputManager
 from ...utility.consts import DEV_MODE
 from ...utility.custom_os import CustomOS

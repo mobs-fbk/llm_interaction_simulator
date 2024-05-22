@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from itakello_logging import ItakelloLogging
 
-from ..abstracts import BaseManager
+from ..interfaces import BaseManager
 from ..components.conversation.conversation import Conversation
 from ..components.conversation.conversation_manager import ConversationManager
 from ..components.experiment.experiment import Experiment

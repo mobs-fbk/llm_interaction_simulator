@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 import httpx
 from itakello_logging import ItakelloLogging
 
-from ...abstracts import BaseManager
+from ...interfaces import BaseManager
 from ...core.database_manager import DatabaseManager
 from ...core.input_manager import InputManager
 from ...utility.consts import DEV_MODE

@@ -2,9 +2,9 @@ from dataclasses import dataclass, field
 
 from itakello_logging import ItakelloLogging
 
-from ...abstracts import BaseManager
 from ...core.database_manager import DatabaseManager
 from ...core.input_manager import InputManager
+from ...interfaces import BaseManager
 from ...utility.consts import DEV_MODE, TIME_FORMAT
 from ...utility.custom_os import CustomOS
 from ..experiment.experiment import Experiment
@@ -184,7 +184,7 @@ class ConversationManager(BaseManager):
             total_messages = int(total_messages)
         else:
             total_messages = self.input_m.input_int(
-                "2.1. Enter the total number of messages per convesation (it has to be even)",
+                "2.1. Enter the total number of messages per conversation (it has to be even)",
                 positive_requirement=True,
                 even_requirement=True,
             )

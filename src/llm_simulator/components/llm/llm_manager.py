@@ -4,7 +4,7 @@ import httpx
 import ollama
 from itakello_logging import ItakelloLogging
 
-from ...abstracts import BaseManager
+from ...interfaces import BaseManager
 from ...core.input_manager import InputManager
 from ...utility.custom_os import CustomOS
 from .llm import LLM

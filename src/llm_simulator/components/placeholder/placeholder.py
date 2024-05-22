@@ -5,7 +5,7 @@ import nltk
 from itakello_logging import ItakelloLogging
 from nltk import pos_tag
 
-from ...abstracts.mongo_model import MongoModel
+from ...interfaces.mongo_model import MongoModel
 from ...utility.enums import PlaceholderType
 
 nltk.download("averaged_perceptron_tagger", quiet=True)

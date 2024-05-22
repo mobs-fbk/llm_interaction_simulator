@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from itakello_logging import ItakelloLogging
 
-from ...abstracts.mongo_model import MongoModel
+from ...interfaces.mongo_model import MongoModel
 from ..placeholder.placeholder import Placeholder
 from ..section.section import Section
 

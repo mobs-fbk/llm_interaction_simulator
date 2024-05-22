@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from itakello_logging import ItakelloLogging
 
-from ...abstracts.mongo_model import MongoModel
+from ...interfaces.mongo_model import MongoModel
 from ...utility.enums import SectionType
 
 logger = ItakelloLogging().get_logger(__name__)

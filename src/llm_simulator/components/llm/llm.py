@@ -7,7 +7,8 @@ import ollama
 from itakello_logging import ItakelloLogging
 from tqdm import tqdm
 
-from ...abstracts.mongo_model import MongoModel
+from ...interfaces.mongo_model import MongoModel
+from ...utility.consts import MAX_CONTEXT_LEN
 
 logger = ItakelloLogging().get_logger(__name__)
 
@@ -102,7 +103,8 @@ class LLM(MongoModel):
             f"FROM {self.model}\n"
             + f"PARAMETER temperature {self.temperature}\n"
             + f"PARAMETER top_k {self.top_k}\n"
-            + f"PARAMETER top_p {self.top_p}"
+            + f"PARAMETER top_p {self.top_p}\n"
+            + f"PARAMETER num_ctx {MAX_CONTEXT_LEN}\n"
         )
         ollama.create(model=self.name, modelfile=modelfile)
 
