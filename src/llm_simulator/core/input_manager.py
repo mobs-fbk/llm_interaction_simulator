@@ -164,11 +164,19 @@ class InputManager(BaseManager):
         message: str,
         choices: list[str] | list[tuple[str, str]],
         default: list[str] = [],
+        required: bool = False,
     ) -> list[str]:
+        correct = False
         logger.debug(f"Message: {message}")
-        user_input = inquirer3.checkbox(
-            message=message, choices=choices, render=self.render, default=default
-        )
+        user_input = ""
+        while not correct:
+            user_input = inquirer3.checkbox(
+                message=message, choices=choices, render=self.render, default=default
+            )
+            if required and not user_input:
+                logger.error("Invalid input. Please select at least one value.")
+            else:
+                correct = True
         logger.debug(f"Input: {user_input}")
         if type(user_input) != list:
             raise ValueError("Invalid input. Please enter a list.")
