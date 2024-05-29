@@ -4,9 +4,9 @@ from dataclasses import dataclass, field
 import httpx
 from itakello_logging import ItakelloLogging
 
-from ...interfaces import BaseManager
 from ...core.database_manager import DatabaseManager
 from ...core.input_manager import InputManager
+from ...interfaces import BaseManager
 from ...utility.consts import DEV_MODE
 from ...utility.custom_os import CustomOS
 from ...utility.enums import SectionType
@@ -45,7 +45,7 @@ class ExperimentManager(BaseManager):
 
         starting_message = self._ask_for_starting_message()
 
-        llms = self.llm_m.ask_for_llms()
+        llms = self.llm_m.ask_for_llms(optional=False)
 
         agents_sections = self.section_m.ask_for_sections(type=SectionType.ROLES)
         shared_sections, private_sections = self.section_m.ask_for_shared_sections(
