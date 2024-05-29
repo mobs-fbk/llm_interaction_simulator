@@ -1,5 +1,5 @@
 # Use the NVIDIA PyTorch image as the base image
-FROM nvcr.io/nvidia/pytorch:22.02-py3
+FROM nvcr.io/nvidia/pytorch:24.05-py3
 
 # Update the OS and install any necessary dependencies
 RUN apt-get update && \
