@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
 from itakello_logging import ItakelloLogging
 
-from src.llm_simulator.core.action_manager import ActionManager
-from src.llm_simulator.core.database_manager import DatabaseManager
-from src.llm_simulator.core.input_manager import InputManager
-from src.llm_simulator.core.output_manager import OutputManager
+from src.core.action_manager import ActionManager
+from src.core.database_manager import DatabaseManager
+from src.core.input_manager import InputManager
+from src.core.output_manager import OutputManager
 
 logger = ItakelloLogging.get_logger(__name__)
 
