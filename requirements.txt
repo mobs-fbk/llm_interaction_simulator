@@ -1,6 +1,6 @@
 pyautogen
 ollama
-itakello-logging
+itakello-logging==0.2.1.6
 pymongo
 inquirer3
 prompt_toolkit
@@ -9,4 +9,4 @@ inflect
 pytest
 pytest-mock
 python-dotenv
-asynci
+asyncio
