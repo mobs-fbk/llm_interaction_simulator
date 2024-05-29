@@ -175,6 +175,7 @@ class ConversationManager(BaseManager):
             llms = self.input_m.select_multiple(
                 message="1. Select the LLMs to use",
                 choices=[(str(llm), llm.name) for llm in available_llms],
+                required=True,
             )
         return llms
 

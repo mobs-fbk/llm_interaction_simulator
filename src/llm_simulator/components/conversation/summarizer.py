@@ -3,8 +3,6 @@ from dataclasses import InitVar, dataclass, field
 from autogen import OpenAIWrapper
 from itakello_logging import ItakelloLogging
 
-from llm_simulator.components import placeholder
-
 from ..llm.llm import LLM
 from ..section.section import Section
 
