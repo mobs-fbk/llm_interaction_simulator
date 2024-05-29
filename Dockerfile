@@ -5,7 +5,8 @@ FROM nvcr.io/nvidia/pytorch:22.02-py3
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --upgrade pip
 
 # Install the ollama external service
 RUN curl https://ollama.ai/install.sh | sh
