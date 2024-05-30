@@ -22,5 +22,8 @@ COPY src /app/src
 # Set the working directory
 WORKDIR /app
 
-# Start ollama service and then open a shell
-CMD ["bash", "-c", "ollama serve & bash"]
+# Start ollama service in the background and suppress its output
+ENTRYPOINT ["bash", "-c", "ollama serve > /dev/null 2>&1 & exec bash"]
+
+# Use an infinite loop to keep the container alive
+CMD ["tail", "-f", "/dev/null"]
