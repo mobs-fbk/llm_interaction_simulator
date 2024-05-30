@@ -11,6 +11,15 @@ RUN apt-get update && \
 # Install the ollama external service
 RUN curl https://ollama.ai/install.sh | sh
 
+# create a user group and a user
+ARG USER=mobs
+ARG USER_ID=1008
+ARG USER_GROUP=mobs
+ARG USER_GROUP_ID=1008
+RUN addgroup --gid ${USER_GROUP_ID} ${USER_GROUP}
+RUN adduser --gecos "" --disabled-password --uid ${USER_ID} -gid ${USER_GROUP_ID} ${USER}
+USER mobs
+
 # Set environment variables
 ENV OLLAMA_NUM_PARALLEL=4
 ENV OLLAMA_MAX_LOADED_MODELS=4
