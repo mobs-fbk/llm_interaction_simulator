@@ -22,5 +22,5 @@ COPY src /app/src
 # Set the working directory
 WORKDIR /app
 
-# Start a shell by default
-CMD ["bash"]
+# Start ollama service and then open a shell
+CMD ["bash", "-c", "ollama serve & bash"]
