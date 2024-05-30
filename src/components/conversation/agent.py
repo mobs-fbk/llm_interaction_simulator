@@ -16,7 +16,7 @@ logger = ItakelloLogging().get_logger(__name__)
 @dataclass
 class CustomAgent(ConversableAgent):
     role: str
-    full_roles: list[str]
+    # full_roles: list[str]
     llm: LLM
 
     placeholders: InitVar[dict[str, str]]
@@ -61,13 +61,13 @@ class CustomAgent(ConversableAgent):
         logger.debug(str(self.client.total_usage_summary))  # type: ignore
         reply = str(reply).strip()
         # logger.debug(f"Raw reply:\n---\n{reply}\n---\n")
-        for w in self.full_roles:
+        """for w in self.full_roles:
             if w == reply[: len(w)]:
                 reply = reply[len(w) :]
         for w in self.full_roles:
             if w in reply:
-                reply = reply.split(w)[0]
-        reply = reply.strip()
+                reply = reply.split(w)[0]"""
+        # reply = reply.strip()
         # logger.debug(f"Processed reply:\n---\n{reply}\n---\n")
         return reply
 

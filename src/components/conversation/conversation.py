@@ -54,13 +54,13 @@ class Conversation(MongoModel):
         placeholders: dict[str, str],
     ) -> list[CustomAgent]:
         agents = []
-        full_roles = [f"{role.capitalize()}:" for role, _ in self.agent_combination]
+        # full_roles = [f"{role.capitalize()}:" for role, _ in self.agent_combination]
         for role, num in self.agent_combination:
             for _ in range(num):
                 agents.append(
                     CustomAgent(
                         role=role,
-                        full_roles=full_roles,
+                        # full_roles=full_roles,
                         placeholders=placeholders,
                         sections=list(experiment.shared_sections.values())
                         + list(experiment.roles[role].sections.values()),
