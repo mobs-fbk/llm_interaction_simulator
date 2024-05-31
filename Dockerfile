@@ -18,7 +18,6 @@ ARG USER_GROUP=mobs
 ARG USER_GROUP_ID=1008
 RUN addgroup --gid ${USER_GROUP_ID} ${USER_GROUP}
 RUN adduser --gecos "" --disabled-password --uid ${USER_ID} --gid ${USER_GROUP_ID} ${USER}
-USER mobs
 
 # Set environment variables
 ENV OLLAMA_NUM_PARALLEL=4
@@ -36,6 +35,15 @@ COPY start.sh /app/
 
 # Set the working directory
 WORKDIR /app
+
+# Make the start script executable
+RUN chmod +x start.sh
+
+# Change ownership of /app directory to the user 'mobs'
+RUN chown -R mobs:mobs /app
+
+# Set user to 'mobs'
+USER mobs
 
 # Set the entrypoint to the start script
 ENTRYPOINT ["./start.sh"]
