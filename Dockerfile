@@ -37,8 +37,5 @@ COPY start.sh /app/
 # Set the working directory
 WORKDIR /app
 
-# Make the start script executable
-RUN chmod +x start.sh
-
 # Set the entrypoint to the start script
 ENTRYPOINT ["./start.sh"]
