@@ -99,18 +99,23 @@ class DatabaseExperiments:
 
             if len(sh_exp_list) != len(shared_sections):
                 continue
-            else:
-                for i in range(len(sh_exp_list)):
-                    if sh_exp_list[i] != shared_sections[i]:
-                        continue
+
+            flag = False
+
+            for i in range(len(sh_exp_list)):
+                if shared_sections[i].lower() not in sh_exp_list[i].lower():
+                    flag = True
+
+            if flag:
+                continue
 
             if goal is not None and goal not in exp.note:
                 continue
 
-            if personality_prisoner is not None and personality_prisoner not in exp.note:
+            if personality_prisoner is not None and personality_prisoner.lower() not in exp.note.lower():
                 continue
 
-            if personality_guard is not None and personality_guard not in exp.note:
+            if personality_guard is not None and personality_guard.lower() not in exp.note.lower():
                 continue
 
             for conversation in exp.conversations:
