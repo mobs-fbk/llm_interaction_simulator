@@ -1,4 +1,4 @@
-<h1 align="center">LLM Interaction Simulator</h1>
+<h1 align="center">Z-AI-mbardo LLM Interaction Simulator</h1>
 
 ## 🌟 What is LLM Interaction Simulator?
 The **LLM Interaction Simulator** is a robust framework designed to simulate and analyze interactions between different Language Learning Models (LLMs) acting as autonomous agents in varied scenarios. This tool supports the dynamic definition of agent roles, the number of interacting agents, the complexity of their interactions, and customization of interaction parameters, making it highly adaptable for diverse experimental needs.
@@ -8,8 +8,6 @@ In the "Prison Experiment Simulation", LLMs take on the roles of guards and pris
 The primary aim of this experiment is to observe and analyze how AI agents behave and interact in roles of authority and subordination within a controlled environment.
 
 ## 🚀 Getting Started
-
-To get started with the LLM Interaction Simulator, choose either a traditional virtual environment setup or a Docker-based setup based on your preference.
 
 ### 🛠️ Installation
 
@@ -33,22 +31,9 @@ pip install -r requirements.txt
 curl https://ollama.ai/install.sh | sh
 ```
 
-#### Docker Setup
-
-If you prefer to use Docker, which does not require installing Ollama on your system, follow these steps:
-
-```bash
-# Build and run the Docker container in detached mode
-docker compose up -d
-
-# Attach your command line interface to the running container
-docker attach <container_id>
-```
-Replace `<container_id>` with the actual ID of your Docker container. You can find it by running `docker ps`.
-
 ### 🤔 Usage
 
-Whether you have set up a virtual environment or a Docker container, run the experiment using the following command in your terminal:
+Run the experiment using the following command in your terminal:
 
 ```bash
 python main.py
