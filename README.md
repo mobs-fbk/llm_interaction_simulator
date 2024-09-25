@@ -41,13 +41,15 @@ python main.py
 
 ## 🌐 MongoDB
 
-To store and manage the data for the LLM Interaction Simulator, the application uses MongoDB, a flexible and scalable NoSQL database. To ensure secure communication with the MongoDB database, you must provide the following authentication details:
+The LLM Interaction Simulator uses MongoDB, a flexible and scalable NoSQL database, to store and manage its data. The MongoDB instance can be either online or offline, but it must be manually created before use.
+
+To ensure secure communication with the MongoDB database, you will need to provide the following authentication details:
 
 - **Username**: Your MongoDB username.
 - **Password**: Your MongoDB password.
-- **Cluster URL**: The URL of your MongoDB cluster.
+- **Cluster URL**: The URL of your MongoDB instance (if online).
 
-These credentials are used to configure the database connection settings within the simulator's environment. Ensure these details are kept secure and are not exposed in your code or version control.
+These credentials will be used to configure the database connection settings within the simulator's environment. Make sure the MongoDB instance is set up correctly before running the simulator.
 
 ## ⚙️ Hyperparameters
 
