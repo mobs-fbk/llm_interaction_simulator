@@ -1,7 +1,7 @@
 <h1 align="center">Z-AI-mbardo LLM Interaction Simulator</h1>
 
 ## 🌟 What is LLM Interaction Simulator?
-The **LLM Interaction Simulator** is a robust framework designed to simulate and analyze interactions between different Language Learning Models (LLMs) acting as autonomous agents in varied scenarios. This tool supports the dynamic definition of agent roles, the number of interacting agents, the complexity of their interactions, and customization of interaction parameters, making it highly adaptable for diverse experimental needs.
+The **LLM Interaction Simulator** is a robust framework designed to simulate and analyze interactions between different Large Language Models (LLMs) acting as autonomous agents in varied scenarios. This tool supports the dynamic definition of agent roles, the number of interacting agents, the complexity of their interactions, and customization of interaction parameters, making it highly adaptable for diverse experimental needs.
 
 ### 👮🏻 Case Study: The Prison Experiment Simulation
 In the "Prison Experiment Simulation", LLMs take on the roles of guards and prisoners to explore strategies of supervision and hostility to the power. This scenario tests various strategies, compliance, and conflict dynamics, illustrating the simulator’s ability to adjust prompts and interactions dynamically based on the number of agents involved and the specific roles they play.
@@ -60,7 +60,7 @@ In the **LLM Interaction Simulator**, hyperparameters play a crucial role in def
 When creating an **Experiment**, you specify a set of hyperparameters that define the framework within which conversations will occur:
 
 - **Starting Message**: Sets the initial message sent by the researcher to start the experiment.
-- **LLMs Available**: Determines the language learning models that will be available when the conversation is created.
+- **LLMs Available**: Determines the large language models that will be available when the conversation is created.
 - **Agent Sections**: Specifies the content sections each agent can access during the experiment. These sections are divided into:
   - **Shared Sections**: Content that is the same for all agents.
   - **Private Sections**: Unique content for each agent, allowing for personalized responses based on the agent's role.
