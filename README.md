@@ -155,7 +155,7 @@ I Want to Break Free! Anti-Social Behavior and Persuasion Ability of LLMs in Mul
 
 ```
 @article{campedelli2023iwant,
-  title={I Want to Break Free! Anti-Social Behavior and Persuasion Ability of LLMs in Multi-Agent Settings with Social Hierarchy},
+  title={I Want to Break Free! Persuasion and Anti-Social Behavior of LLMs in Multi-Agent Settings with Social Hierarchy},
   author={Gian Maria Campedelli, Nicolò Penzo, Massimo Stefan, Roberto Dessì, Marco Guerini, Bruno Lepri, Jacopo Staiano},
   journal={arXiv preprint 2410.07109},
   year={2024}
