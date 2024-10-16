@@ -151,7 +151,7 @@ The LLM Interaction Simulator is equipped with a robust set of features designed
 
 ## Reference
 
-I Want to Break Free! Anti-Social Behavior and Persuasion Ability of LLMs in Multi-Agent Settings with Social Hierarchy -- [https://arxiv.org/abs/2410.07109](https://arxiv.org/abs/2410.07109)
+[I Want to Break Free! Persuasion and Anti-Social Behavior of LLMs in Multi-Agent Settings with Social Hierarchy](https://arxiv.org/abs/2410.07109)
 
 ```
 @article{campedelli2023iwant,
