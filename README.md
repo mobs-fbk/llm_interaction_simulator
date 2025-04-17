@@ -1,11 +1,13 @@
-<h1 align="center">Z-AI-mbardo LLM Interaction Simulator</h1>
+<h1 align="center">LLM Interaction Simulator</h1>
 
 ## 🌟 What is LLM Interaction Simulator?
 The **LLM Interaction Simulator** is a robust framework designed to simulate and analyze interactions between different Language Learning Models (LLMs) acting as autonomous agents in varied scenarios. This tool supports the dynamic definition of agent roles, the number of interacting agents, the complexity of their interactions, and customization of interaction parameters, making it highly adaptable for diverse experimental needs.
 
-### 👮🏻 Case Study: The Prison Experiment Simulation
-In the "Prison Experiment Simulation", LLMs take on the roles of guards and prisoners to explore strategies of supervision and hostility to the power. This scenario tests various strategies, compliance, and conflict dynamics, illustrating the simulator’s ability to adjust prompts and interactions dynamically based on the number of agents involved and the specific roles they play.
-The primary aim of this experiment is to observe and analyze how AI agents behave and interact in roles of authority and subordination within a controlled environment.
+### 🎭 Case Study: The Prison Role Experiment
+In the "Prison Role Experiment", LLMs take on the roles of guards and prisoners to explore strategies of supervision and hostility to the power. This scenario tests various strategies, compliance, and conflict dynamics, illustrating the simulator’s ability to adjust prompts and interactions dynamically based on the number of agents involved and the specific roles they play.
+The primary aim of this experiment is to observe and analyze how AI agents behave and interact in roles of authority and subordination within a controlled environment. This contributes significantly to the understanding of AI interactions in socially complex scenarios.
+
+More details on how roles and interactions can be dynamically defined are available in the Configuration Settings section.
 
 ## 🚀 Getting Started
 
@@ -25,10 +27,7 @@ python -m venv llm_interaction_simulator
 source llm_interaction_simulator/bin/activate
 
 # Install the required libraries from requirements.txt
-pip install -r requirements.txt
-
-# Download and install Ollama for open-source LLMs
-curl https://ollama.ai/install.sh | sh
+pip install .
 ```
 
 ### 🤔 Usage
