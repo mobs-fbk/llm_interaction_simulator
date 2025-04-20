@@ -29,12 +29,15 @@ class LLM(MongoModel):
 
         # If this is an OpenAI GPT model, configure for OpenAI API instead of Ollama
         if self.model.startswith("gpt-"):
+            # Configure for OpenAI API (e.g., gpt-3.5-turbo) and set instance name
             self.config = {
                 "model": self.model,
                 "api_key": os.getenv("OPENAI_API_KEY", ""),
                 "base_url": os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1"),
                 "cache_seed": None,
             }
+            # Use the model identifier as the name for token-summary lookup and selection
+            self.name = self.model
             logger.debug(f"Created an OpenAI LLM instance: {self.model}")
             return
 

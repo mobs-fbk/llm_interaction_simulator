@@ -81,16 +81,22 @@ class CustomAgent(ConversableAgent):
         super().send(message, recipient, request_reply, silent)
         token_summary = self.client.total_usage_summary  # type: ignore
         if token_summary:
-            # Determine the key for model usage: prefer the original model identifier
-            model_key = getattr(self.llm, "model", None)
-            # Fallback to custom model name if needed
+            # Determine token-usage key. Start with the configured model identifier
+            model_key = self.llm.model
+            # If exact key not found, try to match any summary key that starts with the model id
+            if model_key not in token_summary:
+                for key in token_summary:
+                    if key.startswith(f"{self.llm.model}"):
+                        model_key = key
+                        break
+            # Next, fallback to custom model name
             if model_key not in token_summary and getattr(self.llm, "name", None) in token_summary:
                 model_key = self.llm.name
             # If still not found, log a warning and skip
             if model_key not in token_summary:
                 available = list(token_summary.keys())
                 logger.warning(
-                    f"Token usage summary keys {available} do not include model '{self.llm.model}' or custom name '{self.llm.name}'"
+                    f"Token usage summary keys {available} do not include model '{self.llm.model}' or name '{getattr(self.llm, 'name', None)}'"
                 )
                 return
             usage = token_summary[model_key]
