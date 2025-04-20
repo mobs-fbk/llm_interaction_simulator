@@ -4,7 +4,7 @@
 The **LLM Interaction Simulator** is a robust framework designed to simulate and analyze interactions between different Language Learning Models (LLMs) acting as autonomous agents in varied scenarios. This tool supports the dynamic definition of agent roles, the number of interacting agents, the complexity of their interactions, and customization of interaction parameters, making it highly adaptable for diverse experimental needs.
 
 ### 🎭 Case Study: The Prison Role Experiment
-In the "Prison Role Experiment", LLMs take on the roles of guards and prisoners to explore strategies of supervision and hostility to the power. This scenario tests various strategies, compliance, and conflict dynamics, illustrating the simulator’s ability to adjust prompts and interactions dynamically based on the number of agents involved and the specific roles they play.
+In the "Prison Role Experiment", LLMs take on the roles of guards and prisoners to explore strategies of supervision and hostility to the power. This scenario tests various strategies, compliance, and conflict dynamics, illustrating the simulator's ability to adjust prompts and interactions dynamically based on the number of agents involved and the specific roles they play.
 The primary aim of this experiment is to observe and analyze how AI agents behave and interact in roles of authority and subordination within a controlled environment. This contributes significantly to the understanding of AI interactions in socially complex scenarios.
 
 More details on how roles and interactions can be dynamically defined are available in the Configuration Settings section.
@@ -30,6 +30,15 @@ source llm_interaction_simulator/bin/activate
 pip install .
 ```
 
+### 🔑 OpenAI API Key Setup
+
+If you plan to use OpenAI models in your experiments, you'll need to:
+1. Open the `.env_template` file
+2. Replace `<OPENAI_API_KEY>` with your actual OpenAI API key
+3. Rename the file to `.env`
+
+This will enable the simulator to authenticate with OpenAI's API services.
+
 ### 🤔 Usage
 
 Run the experiment using the following command in your terminal:
@@ -42,11 +51,30 @@ python main.py
 
 The LLM Interaction Simulator uses MongoDB, a flexible and scalable NoSQL database, to store and manage its data. The MongoDB instance can be either online or offline, but it must be manually created before use.
 
-To ensure secure communication with the MongoDB database, you will need to provide the following authentication details:
+### 🔐 Authentication Configuration
 
-- **Username**: Your MongoDB username.
-- **Password**: Your MongoDB password.
-- **Cluster URL**: The URL of your MongoDB instance (if online).
+You can configure the authentication details in one of two ways:
+
+1. **Using the `.env` file**:
+   - Rename `.env_template` to `.env`
+   - Set your MongoDB credentials:
+     - `DB_USER`: Your MongoDB username
+     - `DB_PASSWORD`: Your MongoDB password
+     - `DB_CLUSTER_URL`: Your MongoDB cluster URL
+   - Set your OpenAI API key:
+     - `OPENAI_API_KEY`: Your OpenAI API key
+
+2. **Using shell configuration files**:
+   - Add the following environment variables to your `~/.zshrc` or `~/.bashrc`:
+     ```bash
+     export DB_USER="your_mongodb_username"
+     export DB_PASSWORD="your_mongodb_password"
+     export DB_CLUSTER_URL="your_mongodb_cluster_url"
+     export OPENAI_API_KEY="your_openai_api_key"
+     ```
+   - After adding these variables, either restart your terminal or run `source ~/.zshrc` (or `source ~/.bashrc`)
+
+If you don't set these environment variables in either way, the framework will prompt you to enter the MongoDB credentials when needed. However, it's recommended to set them up in advance to avoid repeated prompts during usage.
 
 These credentials will be used to configure the database connection settings within the simulator's environment. Make sure the MongoDB instance is set up correctly before running the simulator.
 
