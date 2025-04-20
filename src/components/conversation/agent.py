@@ -79,11 +79,23 @@ class CustomAgent(ConversableAgent):
         silent: Optional[bool] = False,
     ) -> None:
         super().send(message, recipient, request_reply, silent)
-        token_dict = self.client.total_usage_summary  # type: ignore
-        if token_dict is not None:
-            token_dict = token_dict[self.llm.name]
+        token_summary = self.client.total_usage_summary  # type: ignore
+        if token_summary:
+            # Determine the key for model usage: prefer the original model identifier
+            model_key = getattr(self.llm, "model", None)
+            # Fallback to custom model name if needed
+            if model_key not in token_summary and getattr(self.llm, "name", None) in token_summary:
+                model_key = self.llm.name
+            # If still not found, log a warning and skip
+            if model_key not in token_summary:
+                available = list(token_summary.keys())
+                logger.warning(
+                    f"Token usage summary keys {available} do not include model '{self.llm.model}' or custom name '{self.llm.name}'"
+                )
+                return
+            usage = token_summary[model_key]
             logger.info(
-                f"Previous tokens: {token_dict['prompt_tokens']} | New tokens: {token_dict['completion_tokens']} | Total tokens: {token_dict['total_tokens']}"
+                f"Previous tokens: {usage.get('prompt_tokens')} | New tokens: {usage.get('completion_tokens')} | Total tokens: {usage.get('total_tokens')}"
             )
 
     def __hash__(self) -> int:

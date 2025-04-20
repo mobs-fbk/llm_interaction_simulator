@@ -48,6 +48,9 @@ class LLM(MongoModel):
             "base_url": "http://localhost:11434/v1",
             "api_key": "ollama",
             "cache_seed": None,
+            # Price per 1k tokens: [prompt_price_per_1k, completion_price_per_1k]
+            # Local models are free by default
+            "price": [0.0, 0.0],
         }
         logger.debug(f"Created a new Ollama LLM instance: {self.model}")
 
