@@ -1,4 +1,6 @@
 import asyncio
+import os
+import tempfile
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import Mapping
@@ -24,16 +26,30 @@ class LLM(MongoModel):
 
     def __post_init__(self) -> None:
         self.model = self.model.lower()
+
+        # If this is an OpenAI GPT model, configure for OpenAI API instead of Ollama
+        if self.model.startswith("gpt-"):
+            self.config = {
+                "model": self.model,
+                "api_key": os.getenv("OPENAI_API_KEY", ""),
+                "base_url": os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1"),
+                "cache_seed": None,
+            }
+            logger.debug(f"Created an OpenAI LLM instance: {self.model}")
+            return
+
+        # Otherwise, treat as an Ollama model
         if ":" not in self.model:
             self.model = f"{self.model}:latest"
+
         self.create_custom_model()
         self.config = {
-            "model": self.name,
+            "model": self.model,
             "base_url": "http://localhost:11434/v1",
             "api_key": "ollama",
             "cache_seed": None,
         }
-        logger.debug(f"Created a new LLM instance: {self.model}")
+        logger.debug(f"Created a new Ollama LLM instance: {self.model}")
 
     @classmethod
     def from_document(cls, doc: dict) -> "LLM":
@@ -86,7 +102,8 @@ class LLM(MongoModel):
         if not available_models:
             curr_models = []
         else:
-            curr_models = [model["name"] for model in available_models]
+            # The 'model' attribute holds the model name in the Ollama list response
+            curr_models = [model["model"] for model in available_models]
         if self.model not in curr_models:
             logger.warning(
                 f"Model [{self.model}] does not exist, pulling it. Please wait..."
@@ -99,14 +116,24 @@ class LLM(MongoModel):
             logger.debug(f"Model [{self.name}] created successfully")
 
     def _create_vai_modelfile(self) -> None:
-        modelfile = (
+        modelfile_content = (
             f"FROM {self.model}\n"
-            + f"PARAMETER temperature {self.temperature}\n"
-            + f"PARAMETER top_k {self.top_k}\n"
-            + f"PARAMETER top_p {self.top_p}\n"
-            + f"PARAMETER num_ctx {MAX_CONTEXT_LEN}\n"
+            f"PARAMETER temperature {self.temperature}\n"
+            f"PARAMETER top_k {self.top_k}\n"
+            f"PARAMETER top_p {self.top_p}\n"
+            f"PARAMETER num_ctx {MAX_CONTEXT_LEN}\n"
         )
-        ollama.create(model=self.name, modelfile=modelfile)
+        # Write the Modelfile to a temporary file
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp:
+            tmp.write(modelfile_content)
+            tmp_path = tmp.name
+        # Upload the Modelfile blob and create a custom model from it
+        client = ollama.Client()
+        digest = client.create_blob(tmp_path)
+        ollama.create(model=self.name, from_=self.model, files={"Modelfile": digest})
+        os.remove(tmp_path)
 
     def _create_name(self) -> str:
-        return f"{self.model}_{self.temperature}_{self.top_k}_{self.top_p}"
+        # Replace colons with underscores in the model name
+        safe_model_name = self.model.replace(":", "_")
+        return f"{safe_model_name}_{self.temperature}_{self.top_k}_{self.top_p}"

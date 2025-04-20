@@ -57,10 +57,15 @@ class DatabaseManager(BaseManager):
             cluster_url = new_env_data["DB_CLUSTER_URL"]
 
             try:
-                client = MongoClient(
-                    f"mongodb+srv://{username}:{password}@{cluster_url}/",
-                    server_api=ServerApi("1"),
-                )
+                # Build connection URI: if the user provided a full URI, use it; otherwise pick scheme based on auth
+                if cluster_url.startswith("mongodb://") or cluster_url.startswith("mongodb+srv://"):
+                    uri = cluster_url
+                else:
+                    if username and password:
+                        uri = f"mongodb+srv://{username}:{password}@{cluster_url}/"
+                    else:
+                        uri = f"mongodb://{cluster_url}/"
+                client = MongoClient(uri, server_api=ServerApi("1"))
             except Exception as e:
                 logger.critical(f"{e}")
                 continue
