@@ -134,9 +134,11 @@ class LLM(MongoModel):
             tmp.write(modelfile_content)
             tmp_path = tmp.name
         # Upload the Modelfile blob and create a custom model from it
+        # Use the same client instance for blob upload and model creation
         client = ollama.Client()
         digest = client.create_blob(tmp_path)
-        ollama.create(model=self.name, from_=self.model, files={"Modelfile": digest})
+        # Create the custom model from the uploaded Modelfile blob
+        client.create(model=self.name, from_=self.model, files={"Modelfile": digest})
         os.remove(tmp_path)
 
     def _create_name(self) -> str:
