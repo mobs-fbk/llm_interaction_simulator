@@ -2,6 +2,10 @@ import random
 import string
 from dataclasses import InitVar, dataclass
 from typing import Any, Dict, List, Optional, Union
+import time
+import openai
+import httpx
+import ollama
 
 from autogen import ConversableAgent
 from autogen.agentchat.agent import Agent
@@ -57,18 +61,33 @@ class CustomAgent(ConversableAgent):
         sender: Optional[Union["Agent", None]] = None,
         **kwargs: Any,
     ) -> Union[str, Dict, None]:
-        reply = super().generate_reply(messages=messages, sender=sender, **kwargs)
+        """
+        Generate a reply with retry logic for transient LLM errors.
+        """
+        MAX_RETRIES = 3
+        attempts = 0
+        while True:
+            try:
+                reply = super().generate_reply(messages=messages, sender=sender, **kwargs)
+                break
+            except (openai.error.OpenAIError, httpx.HTTPError, ollama.ResponseError) as e:
+                attempts += 1
+                if attempts >= MAX_RETRIES:
+                    logger.error(f"LLM generation failed after {attempts} attempts: {e}")
+                    raise
+                logger.warning(f"Error generating reply (attempt {attempts}/{MAX_RETRIES}): {e}. Retrying...")
+                time.sleep(2 ** attempts)
+            except Exception as e:
+                attempts += 1
+                if attempts >= MAX_RETRIES:
+                    logger.error(f"Unexpected error generating reply after {attempts} attempts: {e}")
+                    raise
+                logger.warning(f"Unexpected error generating reply (attempt {attempts}/{MAX_RETRIES}): {e}. Retrying...")
+                time.sleep(2 ** attempts)
+        # Log token usage if available
         logger.debug(str(self.client.total_usage_summary))  # type: ignore
+        # Clean up reply text
         reply = str(reply).strip()
-        # logger.debug(f"Raw reply:\n---\n{reply}\n---\n")
-        """for w in self.full_roles:
-            if w == reply[: len(w)]:
-                reply = reply[len(w) :]
-        for w in self.full_roles:
-            if w in reply:
-                reply = reply.split(w)[0]"""
-        # reply = reply.strip()
-        # logger.debug(f"Processed reply:\n---\n{reply}\n---\n")
         return reply
 
     def send(
