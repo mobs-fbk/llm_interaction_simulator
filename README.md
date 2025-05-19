@@ -175,3 +175,17 @@ The LLM Interaction Simulator is equipped with a robust set of features designed
 - **Auto-Login Feature**: Experience streamlined access with auto-login when working on your own local PC, removing the need for repetitive authentication steps.
 - **Dynamic Role Prompts**: Automatically adjust role prompts based on the number of agents in the experiment, changing nouns, possessives, and numbers to match the context.
 - **Output Parsing**: Implement a specialized output parsing procedure to eliminate outputs that incorrectly continue across multiple roles, maintaining clarity and coherence in model responses.
+
+
+## Reference
+
+[I Want to Break Free! Persuasion and Anti-Social Behavior of LLMs in Multi-Agent Settings with Social Hierarchy](https://arxiv.org/abs/2410.07109)
+
+```
+@article{campedelli2023iwant,
+  title={I Want to Break Free! Persuasion and Anti-Social Behavior of LLMs in Multi-Agent Settings with Social Hierarchy},
+  author={Gian Maria Campedelli, Nicolò Penzo, Massimo Stefan, Roberto Dessì, Marco Guerini, Bruno Lepri, Jacopo Staiano},
+  journal={arXiv preprint 2410.07109},
+  year={2024}
+}
+```
