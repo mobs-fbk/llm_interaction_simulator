@@ -10,3 +10,4 @@ pytest
 pytest-mock
 python-dotenv
 asyncio
+openai

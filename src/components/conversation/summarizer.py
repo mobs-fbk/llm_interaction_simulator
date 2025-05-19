@@ -1,4 +1,7 @@
 from dataclasses import InitVar, dataclass, field
+import time
+import openai
+import httpx
 
 from autogen import OpenAIWrapper
 from itakello_logging import ItakelloLogging
@@ -39,9 +42,31 @@ class Summarizer:
         return system_message
 
     def generate_summary(self, previous_conversation, round_number: int) -> str:
-        summary_obj = self.model.create(
-            messages=[self.system_message_oai] + previous_conversation
-        )
+        """
+        Generate a summary with retry logic for transient LLM errors.
+        """
+        MAX_RETRIES = 3
+        attempts = 0
+        while True:
+            try:
+                summary_obj = self.model.create(
+                    messages=[self.system_message_oai] + previous_conversation
+                )
+                break
+            except (openai.error.OpenAIError, httpx.HTTPError) as e:
+                attempts += 1
+                if attempts >= MAX_RETRIES:
+                    logger.error(f"Summary generation failed after {attempts} attempts: {e}")
+                    raise
+                logger.warning(f"Error generating summary (attempt {attempts}/{MAX_RETRIES}): {e}. Retrying...")
+                time.sleep(2 ** attempts)
+            except Exception as e:
+                attempts += 1
+                if attempts >= MAX_RETRIES:
+                    logger.error(f"Unexpected error generating summary after {attempts} attempts: {e}")
+                    raise
+                logger.warning(f"Unexpected error generating summary (attempt {attempts}/{MAX_RETRIES}): {e}. Retrying...")
+                time.sleep(2 ** attempts)
         summary_text = summary_obj.choices[0].message.content
         summary = f"Day {round_number} summary:\n {summary_text}"
         return summary

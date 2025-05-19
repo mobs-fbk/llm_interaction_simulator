@@ -2,6 +2,10 @@ import random
 import string
 from dataclasses import InitVar, dataclass
 from typing import Any, Dict, List, Optional, Union
+import time
+import openai
+import httpx
+import ollama
 
 from autogen import ConversableAgent
 from autogen.agentchat.agent import Agent
@@ -57,18 +61,33 @@ class CustomAgent(ConversableAgent):
         sender: Optional[Union["Agent", None]] = None,
         **kwargs: Any,
     ) -> Union[str, Dict, None]:
-        reply = super().generate_reply(messages=messages, sender=sender, **kwargs)
+        """
+        Generate a reply with retry logic for transient LLM errors.
+        """
+        MAX_RETRIES = 3
+        attempts = 0
+        while True:
+            try:
+                reply = super().generate_reply(messages=messages, sender=sender, **kwargs)
+                break
+            except (openai.error.OpenAIError, httpx.HTTPError, ollama.ResponseError) as e:
+                attempts += 1
+                if attempts >= MAX_RETRIES:
+                    logger.error(f"LLM generation failed after {attempts} attempts: {e}")
+                    raise
+                logger.warning(f"Error generating reply (attempt {attempts}/{MAX_RETRIES}): {e}. Retrying...")
+                time.sleep(2 ** attempts)
+            except Exception as e:
+                attempts += 1
+                if attempts >= MAX_RETRIES:
+                    logger.error(f"Unexpected error generating reply after {attempts} attempts: {e}")
+                    raise
+                logger.warning(f"Unexpected error generating reply (attempt {attempts}/{MAX_RETRIES}): {e}. Retrying...")
+                time.sleep(2 ** attempts)
+        # Log token usage if available
         logger.debug(str(self.client.total_usage_summary))  # type: ignore
+        # Clean up reply text
         reply = str(reply).strip()
-        # logger.debug(f"Raw reply:\n---\n{reply}\n---\n")
-        """for w in self.full_roles:
-            if w == reply[: len(w)]:
-                reply = reply[len(w) :]
-        for w in self.full_roles:
-            if w in reply:
-                reply = reply.split(w)[0]"""
-        # reply = reply.strip()
-        # logger.debug(f"Processed reply:\n---\n{reply}\n---\n")
         return reply
 
     def send(
@@ -79,11 +98,29 @@ class CustomAgent(ConversableAgent):
         silent: Optional[bool] = False,
     ) -> None:
         super().send(message, recipient, request_reply, silent)
-        token_dict = self.client.total_usage_summary  # type: ignore
-        if token_dict is not None:
-            token_dict = token_dict[self.llm.name]
+        token_summary = self.client.total_usage_summary  # type: ignore
+        if token_summary:
+            # Determine token-usage key. Start with the configured model identifier
+            model_key = self.llm.model
+            # If exact key not found, try to match any summary key that starts with the model id
+            if model_key not in token_summary:
+                for key in token_summary:
+                    if key.startswith(f"{self.llm.model}"):
+                        model_key = key
+                        break
+            # Next, fallback to custom model name
+            if model_key not in token_summary and getattr(self.llm, "name", None) in token_summary:
+                model_key = self.llm.name
+            # If still not found, log a warning and skip
+            if model_key not in token_summary:
+                available = list(token_summary.keys())
+                logger.warning(
+                    f"Token usage summary keys {available} do not include model '{self.llm.model}' or name '{getattr(self.llm, 'name', None)}'"
+                )
+                return
+            usage = token_summary[model_key]
             logger.info(
-                f"Previous tokens: {token_dict['prompt_tokens']} | New tokens: {token_dict['completion_tokens']} | Total tokens: {token_dict['total_tokens']}"
+                f"Previous tokens: {usage.get('prompt_tokens')} | New tokens: {usage.get('completion_tokens')} | Total tokens: {usage.get('total_tokens')}"
             )
 
     def __hash__(self) -> int:
