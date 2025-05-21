@@ -20,6 +20,7 @@ matplotlib.rcParams['font.family'] = "sans-serif"
 
 
 ''' Percentages '''
+''' Percentages '''
 
 df = pd.read_excel('updated_openai_toxicity_analysis_percentage_arrmay.xlsx')
 

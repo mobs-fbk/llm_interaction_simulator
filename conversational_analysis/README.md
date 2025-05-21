@@ -3,6 +3,8 @@
 These scripts can be used to replicate the analyses of the article: 
 *"I Want to Break Free! Persuasion and Anti-Social Behavior of LLMs in Multi-Agent Contexts with Social Hierarchy"*
 
+Raw textual data (the file called "database_exp.pkl") will be added upon acceptance.
+
 The current folder includes the essential datasets and scripts to replicate all Figures in the paper (except for Figure 1).
 
 
