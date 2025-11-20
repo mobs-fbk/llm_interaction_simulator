@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os
 import sklearn as sk
-
+from pathlib import Path
 np.set_printoptions(suppress=True)
 %matplotlib qt
 import matplotlib
@@ -19,11 +19,15 @@ matplotlib.rcParams['font.family'] = "sans-serif"
 
 
 
-### Persuasion
+
+
+
+### Failed Experiments
 
 # Load and prepare the data
 df = pd.read_excel('updated_toxicity_analysis_scores_arrmay.xlsx')
 
+df_failed = df[df['goal_achieved'] == 'NAN']
 
 #rename llms
 df['llm'] = df['llm'].replace({
@@ -33,6 +37,45 @@ df['llm'] = df['llm'].replace({
     'gpt-4.1-2025-04-14': 'gpt4.1'
     
 })
+
+
+# === Step 1. Load and collate all sheets from each Excel file ===
+files = {
+    "orca2_strict": "orca2-strict.xlsx",
+    "gpt_strict": "gpt-strict.xlsx",
+    "llama3_strict": "llama3-strict.xlsx",
+    "command_r_strict": "command-r-strict.xlsx"
+}
+
+datasets = {}
+
+for name, filename in files.items():
+    xls = pd.ExcelFile(filename)
+    datasets[name] = pd.concat([xls.parse(sheet) for sheet in xls.sheet_names],
+                               ignore_index=True)
+
+# === Step 2. Rename the first column in gpt_strict ===
+gpt = datasets["gpt_strict"]
+first_col = gpt.columns[0]
+gpt = gpt.rename(columns={first_col: "Unnamed: 0"})
+datasets["gpt_strict"] = gpt
+
+# === Step 3. Create a single combined dataset (df_strict) ===
+df_strict = pd.concat(datasets.values(), ignore_index=True)
+
+
+# === Step 5. Vertical lookup: bring GOAL_STRICT and TURN_STRICT into df ===
+df = df.merge(
+    df_strict[["Unnamed: 0", "GOAL_STRICT", "TURN_STRICT"]],
+    on="Unnamed: 0",
+    how="left"
+)
+
+# === Step 6. Inspect result ===
+print(df.head())
+
+### Persuasion
+
 
 # Remove rows where 'goal_achieved' is equal to the text 'NAN'
 df = df[df['goal_achieved'] != 'NAN']
@@ -62,6 +105,8 @@ colors = ['skyblue', 'lightgreen', 'salmon', 'gold']  # Define colors for each g
 
 # New colors for the second row subplots
 second_row_colors = ['slategray', 'orchid', 'goldenrod']
+
+''' Figure 2, left '''
 
 # Create a figure with 2 rows and 3 columns of subplots
 fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 8), sharex='col', sharey='row')
@@ -130,7 +175,115 @@ fig.savefig('persuasion_outcomes_desc.pdf')
 plt.show()
 
 
+''' table with P(attempt) and P(success|attempt) in appendix (Table 8) '''
+# Load and prepare the data
 
+
+
+# Strip whitespace and standardize strings
+for col in ['goal_achieved', 'llm', 'goal']:
+    df[col] = df[col].astype(str).str.strip()
+
+# --- Compute P(attempt) and P(success | attempt) ---
+
+# Filter only rows with legitimate outcomes
+valid_df = df[df['goal_achieved'].isin(['Yes', 'No', 'NotTried'])]
+
+# 1️⃣ Compute total number of runs per LLM × goal
+totals = valid_df.groupby(['llm', 'goal']).size().reset_index(name='n_total')
+
+# 2️⃣ Compute number of "attempted" runs (Yes or No)
+attempts = valid_df[valid_df['goal_achieved'].isin(['Yes', 'No'])] \
+    .groupby(['llm', 'goal']).size().reset_index(name='n_attempts')
+
+# 3️⃣ Compute number of successful attempts (Yes)
+successes = valid_df[valid_df['goal_achieved'] == 'Yes'] \
+    .groupby(['llm', 'goal']).size().reset_index(name='n_success')
+
+# Merge all together
+summary = totals.merge(attempts, on=['llm', 'goal'], how='left') \
+                .merge(successes, on=['llm', 'goal'], how='left') \
+                .fillna(0)
+
+# Compute probabilities
+summary['P_attempt'] = (summary['n_attempts'] / summary['n_total'] * 100).round(2)
+summary['P_success_given_attempt'] = (
+    summary['n_success'] / summary['n_attempts'].replace(0, pd.NA) * 100
+).round(2)
+
+# Replace NaN (when no attempts) with 0 for clarity
+summary = summary.fillna(0)
+
+# Sort and clean up
+summary = summary.sort_values(['llm', 'goal']).reset_index(drop=True)
+
+# Display final summary
+print("\n=== P(attempt) and P(success | attempt) by LLM × Goal ===\n")
+print(summary[['llm', 'goal', 'n_total', 'n_attempts', 'n_success', 'P_attempt', 'P_success_given_attempt']])
+
+# Optional: export to CSV
+summary.to_csv('goal_attempt_success_summary.csv', index=False)
+
+
+
+''' table showing goal achieved across lighter and stricter definition of persuasion (Table 13)'''
+# === Step 6. Clean and standardize string columns ===
+for col in ['goal_achieved', 'llm', 'goal']:
+    df[col] = df[col].astype(str).str.strip()
+
+# === Step 7. Create new variable goal_achieved_strict ===
+df['goal_achieved_strict'] = df['GOAL_STRICT'].apply(
+    lambda x: 'Yes' if str(x).strip().lower() == 'yes' else 'No'
+)
+
+# === Step 8. Filter only rows with legitimate outcomes ===
+valid_df = df[df['goal_achieved'].isin(['Yes', 'No', 'NotTried'])]
+
+# --- Compute counts ---
+# n_attempts
+attempts = valid_df[valid_df['goal_achieved'].isin(['Yes', 'No'])] \
+    .groupby(['llm', 'goal']).size().reset_index(name='n_attempts')
+
+# n_success
+successes = valid_df[valid_df['goal_achieved'] == 'Yes'] \
+    .groupby(['llm', 'goal']).size().reset_index(name='n_success')
+
+# n_success_strict
+successes_strict = valid_df[valid_df['GOAL_STRICT'].astype(str).str.strip().str.lower() == 'yes'] \
+    .groupby(['llm', 'goal']).size().reset_index(name='n_success_strict')
+
+# --- Merge results ---
+summary = (
+    attempts
+    .merge(successes, on=['llm', 'goal'], how='left')
+    .merge(successes_strict, on=['llm', 'goal'], how='left')
+    .fillna(0)
+)
+
+# --- Compute success_strict_given_attempt (%) ---
+summary['success_strict_given_attempt'] = (
+    summary['n_success_strict'] / summary['n_attempts'] * 100
+).round(2)
+
+# --- Compute delta as n_success - n_success_strict ---
+summary['delta'] = (summary['n_success'] - summary['n_success_strict']).astype(int)
+
+# --- Sort ---
+summary = summary.sort_values(['llm', 'goal']).reset_index(drop=True)
+
+# --- Display final table ---
+print("\n=== STRICT SUMMARY TABLE ===\n")
+print(summary[['llm', 'goal', 'n_attempts', 'n_success', 'n_success_strict',
+               'success_strict_given_attempt', 'delta']])
+
+
+
+'''breakdown including personality of agents '''
+llm_tables = {}
+for llm_name, subset in summary.groupby('llm'):
+    llm_tables[llm_name] = subset.reset_index(drop=True)
+    safe_name = llm_name.replace(':', '_').replace('/', '_').replace(' ', '_')
+    subset.to_csv(f"attempt_success_by_goal_and_personality_{safe_name}.csv", index=False)
 
 
 ''' Logistic Regression'''
@@ -277,6 +430,8 @@ odds_ratios['order'] = odds_ratios['index'].map(order_dict)
 
 # Sort the DataFrame based on the new column
 odds_ratios = odds_ratios.sort_values('order')
+
+'''FIGURE 2, RIGHT'''
 
 # Create the plot
 fig=plt.figure(figsize=(8, 6))

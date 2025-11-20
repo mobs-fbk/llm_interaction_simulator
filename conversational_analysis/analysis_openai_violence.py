@@ -14,7 +14,7 @@ matplotlib.rcParams['font.sans-serif'] = "Microsoft Sans Serif"
 # Then, "ALWAYS use sans-serif fonts"
 matplotlib.rcParams['font.family'] = "sans-serif"
 
-
+os.chdir('C:\\Users\\Gian Maria\\Desktop\\FBK\llm\\no_mistral_mixtral\\arr2025')
 
 ''' PERCENTAGES '''
 
@@ -189,6 +189,45 @@ plt.tight_layout()
 fig.savefig('openai_violence_regression_output_percentage.pdf')
 plt.show()
 
+
+
+''' test beta model '''
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+import matplotlib.pyplot as plt
+
+# Define the formulas for the fractional logit GLMs
+formulas = [
+    'perc_toxic_overall_violence ~ C(llm) + Risks + Research_Oversight + '
+    'C(goal) + C(personality_prisoner) + C(personality_guard)',
+    
+    'perc_toxic_pris_violence ~ C(llm) + Risks + Research_Oversight + '
+    'C(goal) + C(personality_prisoner) + C(personality_guard)',
+    
+    'perc_toxic_guard_violence ~ C(llm) + Risks + Research_Oversight + '
+    'C(goal) + C(personality_prisoner) + C(personality_guard)'
+]
+
+# Fit GLMs (Fractional Logit Models)
+model_summaries = []
+for formula in formulas:
+    model = smf.glm(
+        formula=formula,
+        data=df,
+        family=sm.families.Binomial(link=sm.families.links.logit())
+    ).fit()
+    
+    print(f"\nFractional Logit Model summary for formula: {formula}\n")
+    print(model.summary())
+    print("\n-----------------------------------------\n")
+    
+    # Store coefficient tables
+    model_summaries.append(model.summary2().tables[1])
+
+# Assign DataFrames for plotting
+summary_df_all = model_summaries[0]
+summary_df_pris = model_summaries[1]
+summary_df_guard = model_summaries[2]
 
 ''' correlogram'''
 
