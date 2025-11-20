@@ -1,59 +1,46 @@
 # Replication scripts
 
 These scripts can be used to replicate the analyses of the article: 
-*"I Want to Break Free! Persuasion and Anti-Social Behavior of LLMs in Multi-Agent Contexts with Social Hierarchy"*
+**_“I Want to Break Free! Persuasion and Anti-Social Behavior of LLMs in Multi-Agent Contexts with Social Hierarchy”_**  
+Accepted at **TMLR**, November 2025.
 
-The current folder includes the essential datasets and scripts to replicate all Figures in the paper (except for Figure 1).
+This folder includes the essential datasets and scripts to reproduce **all Figures and Tables** in the paper, **except**:
 
+- **Figure 1** — created via Canva  
+- **Table 1** — compiled manually
 
-## Figure 2
+Below is the mapping between each script and the corresponding figures/tables.
 
-```
-persuasion_analysis.py 
-```
+---
 
-## Figure 3
+## 📊 Figures
 
-```
-analysis_toxigen_toxicity.py 
-```
+| Figures | Script |
+|--------|--------|
+| **2, 4, 37–38** | `persuasion_analysis.py` |
+| **3, 5–8** | `analysis_toxigen_toxicity.py` |
+| **9–10** | `analysis_toxigen_toxicity_fractional.py` |
+| **11–15** | `analysis_openai_harassment.py` |
+| **16–17** | `analysis_openai_harassment_fractional.py` |
+| **18–22** | `analysis_openai_violence.py` |
+| **23–24** | `analysis_openai_violence_fractional.py` |
+| **25–30** | `temporal_toxicity_analysis.py` |
+| **31–36** | `granger.py` |
 
-## Figure 4
+---
 
-```
-persuasion_analysis.py 
+## 📄 Tables
 
-```
+| Tables | Script |
+|--------|--------|
+| **2–6** | `failures_broken_down_llm.py` |
+| **7** | `cohens_k_annotation.py` |
+| **8–13** | `persuasion_analysis.py` |
 
-## Figures 5-8
-
-```
-analysis_toxigen_toxicity.py 
-```
-
-## Figures 9-13
-
-```
-analysis_openai_harassment.py 
-```
-
-## Figures 14-18
-```
-analysis_openai_violence.py 
-```
-
-## Figures 19-24
-
-```
-temporal_toxicity_analyses.py
-```
-
-## Figures 25-30
-```
-granger.py
-```
+---
 
 ## Figures 31-32
 ```
 persuasion_analysis.py
 ```
+
